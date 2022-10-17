@@ -11,4 +11,7 @@ source "$h/scripts/set-var-captive.sh"
 #python3 rule_game_engine.py "captive/game/game-data/rules"
 
 # Use to test the environment class
-python3 rule_game_env.py "captive/game/game-data/rules"
+#python3 rule_game_env.py "captive/game/game-data/rules"
+
+# Use to test the featurization class
+python3 rule_sets.py "captive/game/game-data/rules"
