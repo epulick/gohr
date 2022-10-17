@@ -122,24 +122,6 @@ if __name__ == "__main__":
     rule_dir_path, rule_name = sys.argv[1], 'rules-05.txt'
     rule_file_path = os.path.join(rule_dir_path, rule_name)
 
-    # args = {
-    #         'RULE_FILE_PATH' : rule_file_path,
-    #         'RULE_NAME'  : rule_name,
-    #         'BOARD_SIZE'  : 6,
-    #         'OBJECT_SPACE'  : 16,
-    #         'COLOR_SPACE'  : 4,
-    #         'SHAPE_SPACE'  : 4,
-    #         'BUCKET_SPACE'  : 4,
-    #         'INIT_OBJ_COUNT'  : 20, 
-    #         'R_ACCEPT' : -1,
-    #         'R_REJECT' : -1,
-    #         'TRAIN_HORIZON' : 300,
-    #         'ALPHA' :   1,   
-    #         'TEST_EPISODES' :  100,
-    #         'TEST_FREQ' :   1000,
-    #         'VERBOSE' : 0,
-    #         'LR' : 1e-2
-    #     }
     args = {
         'RULE_FILE_PATH' : rule_file_path,
         'RULE_NAME'  : rule_name,

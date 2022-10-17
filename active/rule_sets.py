@@ -1196,45 +1196,40 @@ class NaiveBoard(RuleGameEnv):
    
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #
-    #      This class constructs all three types of unary indicator features with no overparameterization    
+    #      This class constructs a memoryless, one hot representation of the board state 
     #
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     def __init__(self, args):
         super(NaiveBoard, self).__init__(args)
 
+        # PENDING MODIFICATION
         # defining the feature dimension - circle and bucket-4 indicators removed to avoid over parametrization
         self.action_feature_dim = self.shape_space+self.color_space+self.bucket_space-2    # 10
 
+        # PENDING MODIFICATION
         # define observation space of the model, in our case it corresponds to the feature dimension(which is 10 dimensional in this example) for each action
         self.observation_space = spaces.Box(low=0, high=1, shape=(self.board_size*self.board_size*self.bucket_space,self.action_feature_dim), dtype=int)
 
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #
-    #   To extract feature vector [shape = {star, square, triangle}, color = {red, blue, black, yellow}, bucket = {bucket-1, bucket-2, bucket-3}] for each active positions on the board
+    #   Create feature vector with 1's corresponding to objects on the board
     #
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     def get_feature(self):
 
-        #features = np.zeros((self.board_size, self.board_size, self.bucket_space, self.action_feature_dim)) 
-        features = np.zeros((self.board_size, self.board_size, self.shape_space+self.color_space))             # feature matrix for all possible actions
-        #shape_io, color_io, bucket_io = 0, self.shape_space-1, self.shape_space-1+self.color_space                      # beginning index for different types of features
+        features = np.zeros((self.board_size, self.board_size, self.shape_space+self.color_space))
 
-        # extract features only for active action(ones with some object), equivalent to conjucting the feature with I[there is an object of the position]
+        # Loop over the corresponding objects on the board (features are already initialized to zero otherwise)
         for object_tuple in self.board:
+            # Extract information associated with current object
             o_row, o_col, o_color, o_shape = object_tuple['y'], object_tuple['x'], self.color_id[object_tuple['color']], self.shape_id[object_tuple['shape']]
-            print(o_row,o_col,o_shape,o_color)
+            #print(o_row,o_col,o_shape,o_color)
             
+            # Write out 1's for the objects shape and color (in the correct row,col position in the feature array)
             features[o_row-1][o_col-1][o_shape]=1
             features[o_row-1][o_col-1][self.shape_space+o_color]=1
-        #     for bucket in range(self.bucket_space):
-        #         if(o_shape<=2):
-        #             features[o_row-1][o_col-1][bucket][shape_io+o_shape] = 1
-        #         features[o_row-1][o_col-1][bucket][color_io+o_color] = 1
-
-        # for bucket in range(self.bucket_space-1):
-        #     features[:,:,bucket,bucket_io+bucket] = 1
-        print(features)
+        #print(features)
         return features.flatten()
 
 def test_featurization(args):
