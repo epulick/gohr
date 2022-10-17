@@ -1216,21 +1216,25 @@ class NaiveBoard(RuleGameEnv):
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     def get_feature(self):
 
-        features = np.zeros((self.board_size, self.board_size, self.bucket_space, self.action_feature_dim))             # feature matrix for all possible actions
-        shape_io, color_io, bucket_io = 0, self.shape_space-1, self.shape_space-1+self.color_space                      # beginning index for different types of features
+        #features = np.zeros((self.board_size, self.board_size, self.bucket_space, self.action_feature_dim)) 
+        features = np.zeros((self.board_size, self.board_size, self.shape_space+self.color_space))             # feature matrix for all possible actions
+        #shape_io, color_io, bucket_io = 0, self.shape_space-1, self.shape_space-1+self.color_space                      # beginning index for different types of features
 
         # extract features only for active action(ones with some object), equivalent to conjucting the feature with I[there is an object of the position]
         for object_tuple in self.board:
             o_row, o_col, o_color, o_shape = object_tuple['y'], object_tuple['x'], self.color_id[object_tuple['color']], self.shape_id[object_tuple['shape']]
+            print(o_row,o_col,o_shape,o_color)
+            
+            features[o_row-1][o_col-1][o_shape]=1
+            features[o_row-1][o_col-1][self.shape_space+o_color]=1
+        #     for bucket in range(self.bucket_space):
+        #         if(o_shape<=2):
+        #             features[o_row-1][o_col-1][bucket][shape_io+o_shape] = 1
+        #         features[o_row-1][o_col-1][bucket][color_io+o_color] = 1
 
-            for bucket in range(self.bucket_space):
-                if(o_shape<=2):
-                    features[o_row-1][o_col-1][bucket][shape_io+o_shape] = 1
-                features[o_row-1][o_col-1][bucket][color_io+o_color] = 1
-
-        for bucket in range(self.bucket_space-1):
-            features[:,:,bucket,bucket_io+bucket] = 1
-        
+        # for bucket in range(self.bucket_space-1):
+        #     features[:,:,bucket,bucket_io+bucket] = 1
+        print(features)
         return features.flatten()
 
 def test_featurization(args):
@@ -1251,7 +1255,7 @@ if __name__ == "__main__":
             'NORMALIZE' : False,                # mean-variance normalize goto returns
             'RECORD' : record,                  # record data to neptune
             'SHAPING' : False,                  # use potential-shaped rewards
-            'INIT_OBJ_COUNT'  : 5,             # initial number of objects on the board
+            'INIT_OBJ_COUNT'  : 1,             # initial number of objects on the board
             'R_ACCEPT' : -1,                    # reward for a reject move
             'R_REJECT' : -1,                    # reward for an accept move
             'TRAIN_HORIZON' : 200,              # horizon for each training episode
