@@ -32,7 +32,6 @@ class ReplayMemory(object):
         self.transitions = Transition
 
     def push(self, *args):
-        # Append a transition to the queue
         self.memory.append(self.transitions(*args))
 
     def sample(self, batch_size):
@@ -43,17 +42,25 @@ class ReplayMemory(object):
 
 class DQN():
     def __init__(self,env,args):
+        # Put onto correct hardware
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        # Pull in the game environment
         self.env = env
-        self.in_dim, self.out_dim = self.env.in_dim, self.env.out_dim
-        self.net = QNet(self.in_dim,self.out_dim).to(self.device)
-        self.target_net = copy.deepcopy(self.net)
+        
+        # Misc. parameter import
         self.epsilon = args["EPS_START"]
         self.train_horizon = args['TRAIN_HORIZON']
         self.n_episodes = args['TRAIN_EPISODES']
+        self.batch_size = args['GRAD_BATCH_SIZE']
+
+        # Build the neural network (net and target_net)
+        self.in_dim, self.out_dim = self.env.in_dim, self.env.out_dim
+        self.net = QNet(self.in_dim,self.out_dim).to(self.device)
+        self.target_net = copy.deepcopy(self.net)
+        self.optimizer=torch.optim.Adam(self.net.parameters(),lr=0.0001)
 
         # Set up dataframe for recording the results
-        # to do - consider adding return code
+        # to do - consider adding return code (some pieces are more informative than others)
         self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done', 'other'])
 
         # Set up replay memory
@@ -93,31 +100,39 @@ class DQN():
 
                 # Process next_state into a tensor
                 next_state = torch.from_numpy(next_state).float().unsqueeze(0).to(self.device)
-
+                
+                # Add step reward to episode reward
                 episode_reward+=reward
 
+                # Write current step's data to a dataframe and concat with the main dataframe
                 current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':action_type, 'action':int(action), 'reward':int(reward), 'done':done, 'other':'none'},index=[0])
                 self.all_data_df=pd.concat([self.all_data_df, current_df],ignore_index=True)
-                #self.all_data_df = self.all_data_df.append({'episode':episode, 'time':t, 'action_type':action_type, 'action':int(action), 'reward':int(reward), 'done':done, 'other':'none'}, ignore_index=True)
                 
+                # Append this step to the replay buffer
+                action, reward = torch.IntTensor([action]).to(self.device), torch.FloatTensor([reward]).to(self.device)
+                self.replay_memory.push(state, action, next_state, reward)
+
                 # TO DO - double check on behavior at end of episode
                 state=next_state
+                
+                # Optimize the model
+                self.optimize()
 
                 # Truncate episode early if the board is clear
                 if done:
                     break
 
-            #print(str(episode), episode_reward)
-            # Reset the episode reward
+            # Reset the episode reward before the next iteration
             episode_reward=0
 
     def select_action(self,state):
+
+        # Random exploration action
         if np.random.rand()<self.epsilon: 
-            # Exploration action
             action = self.env.action_space.sample()
             action_type = 'random'
+        # Greedy action per policy
         else:
-            # Greedy action
             with torch.no_grad():
                 action = self.net(state).max(1)[1].to(self.device)
 
@@ -136,3 +151,22 @@ class DQN():
             action_type = 'greedy'
         return action, action_type
         
+    def optimize(self):
+        
+        # Can only optimize if the buffer filled above the batch threshold
+        if len(self.replay_memory) < self.batch_size:
+            return
+
+        # Get a batch
+        batch = self.replay_memory.sample(self.batch_size)
+        
+        state, action, next_state, reward = map(torch.stack, zip(*batch))
+        # # Check the content/shapes
+        # print("state: ", state)
+        # print("state size: ", state.size())
+        # print("action: ", action)
+        # print("action size: ", action.size())
+        # print("reward: ", reward)
+        # print("reward size: ", reward.size())
+
+        return
