@@ -7,6 +7,7 @@ from rule_game_engine import *
 from rule_game_env import *
 from rule_sets import *
 from featurization import *
+from dqn import DQN
 
 
 def test_driver(args):
@@ -15,7 +16,12 @@ def test_driver(args):
     phi = env.get_feature()
 
     # Test the DQN creation
-    # Placeholder
+    agent = DQN(env,args)
+    agent.train()
+    
+    output_dir = args["OUTPUT_DIR"]
+
+    agent.all_data_df.to_csv(os.path.join(output_dir, 'move_data.csv'))
     breakpoint()
 
 if __name__ == "__main__":

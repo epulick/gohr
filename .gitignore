@@ -133,3 +133,6 @@ dmypy.json
 
 # Ignore the captive server install
 captive/
+
+# Ignore outputs
+outputs/

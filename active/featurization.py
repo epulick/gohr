@@ -19,11 +19,12 @@ class NaiveBoard(RuleGameEnv):
         # PENDING MODIFICATION
         # defining the feature dimension - circle and bucket-4 indicators removed to avoid over parametrization
         self.action_feature_dim = self.shape_space+self.color_space+self.bucket_space-2    # 10
+        self.in_dim = self.board_size*self.board_size*(self.shape_space+self.color_space)
+        self.out_dim = self.board_size*self.board_size*self.bucket_space
 
         # PENDING MODIFICATION
         # define observation space of the model, in our case it corresponds to the feature dimension(which is 10 dimensional in this example) for each action
         self.observation_space = spaces.Box(low=0, high=1, shape=(self.board_size*self.board_size*self.bucket_space,self.action_feature_dim), dtype=int)
-
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #
     #   Create feature vector with 1's corresponding to objects on the board
