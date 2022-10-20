@@ -17,13 +17,14 @@ def test_driver(args):
 
     # Test the DQN creation
     agent = DQN(env,args)
+    #breakpoint()
     agent.train()
     
     output_dir = args["OUTPUT_DIR"]
 
     agent.all_data_df.to_csv(os.path.join(output_dir, 'move_data.csv'))
     
-    breakpoint()
+    #breakpoint()
 
 if __name__ == "__main__":
     print("starting driver")
