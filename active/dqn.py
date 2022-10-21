@@ -11,7 +11,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import matplotlib.pyplot as plt
 from torch.distributions import Categorical
-
+from tqdm import tqdm
 from collections import namedtuple, deque
 
 np.set_printoptions(precision=2)
@@ -20,14 +20,14 @@ verbose = 0
 
 class QNet(nn.Module):
     def __init__(self, in_dim, out_dim, hidden_sizes):
-        super(QNet,self).__init__()
+        super().__init__()
         activation = nn.ReLU
         sizes = [in_dim] + hidden_sizes + [out_dim]
         layers = []
         for i in range(len(sizes)-2):
             layers+=[nn.Linear(sizes[i], sizes[i+1]),activation()]
         layers += [nn.Linear(sizes[-2],sizes[-1]),nn.Identity()]
-        self.network = nn.Sequential(*layers)
+        self.network= nn.Sequential(*layers)
 
     def forward(self,X):
         return self.network(X)
@@ -49,7 +49,7 @@ class ReplayMemory(object):
 class DQN():
     def __init__(self,env,args):
         # Put onto correct hardware
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        #self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # Pull in the game environment
         self.env = env
         
@@ -65,21 +65,37 @@ class DQN():
 
         # Build the neural network (net and target_net)
         self.in_dim, self.out_dim = self.env.in_dim, self.env.out_dim
-        self.net = QNet(self.in_dim,self.out_dim,args['HIDDEN_SIZES']).to(self.device)
+        #self.net = QNet(self.in_dim,self.out_dim,args['HIDDEN_SIZES']).to(self.device)
+        self.net = self.make_nn(self.in_dim, self.out_dim, args['HIDDEN_SIZES'])#.to(self.device)
         self.target_net = copy.deepcopy(self.net)
 
         # TO-DO
         # Consider other optimizers via parameter input
         self.optimizer=torch.optim.Adam(self.net.parameters(),args['LR'])
         self.loss = nn.SmoothL1Loss()
+        #self.loss = nn.MSELoss()
 
         # Set up dataframe for recording the results
         # to do - consider adding return code (some pieces are more informative than others)
         self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon', 'other'])
+        self.loss_df = pd.DataFrame(columns= ['loss'])
+        self.episode_df = pd.DataFrame(columns=['episode','reward'])
 
         # Set up replay memory
         self.transitions = namedtuple('Transition', ('state','action','next_state','reward'))
         self.replay_memory = ReplayMemory(args['REPLAY_BUFFER_SIZE'], self.transitions)
+
+    def make_nn(self, in_dim, out_dim, hidden_sizes):
+        activation = nn.ReLU
+        sizes = [in_dim] + hidden_sizes + [out_dim]
+        layers = []
+        for i in range(len(sizes)-2):
+            layers+=[nn.Linear(sizes[i], sizes[i+1]),activation()]
+        layers += [nn.Linear(sizes[-2],sizes[-1]),nn.Identity()]
+        return nn.Sequential(*layers)
+
+    def forward(self,X):
+        return self.net(X)
 
     def reward_mapping(self, old_reward):
         if old_reward == -1:
@@ -88,11 +104,13 @@ class DQN():
             return 1
 
     def train(self):
-        for episode in range(self.n_episodes):
+        for episode in tqdm(range(self.n_episodes)):
             done = 0
             episode_reward = 0
-            state = self.env.reset()
-            
+            state_dict = self.env.reset()
+            state = state_dict['features']
+            mask = state_dict['mask']
+            valid = state_dict['valid']
             # --------------
             # FOR REFERENCE
             # --------------
@@ -111,17 +129,24 @@ class DQN():
             # print("torch.from_numpy(state).float().unsqueeze(0).size: ", torch.from_numpy(state).float().unsqueeze(0).size())
             # # Check dimension of new tensor (now should be [1, input space])
             
-            state = torch.from_numpy(state).float().to(self.device)
+            state = torch.from_numpy(state).float()#.to(self.device)
             for t in range(self.train_horizon):
-
+                #breakpoint()
                 # Step the environment forward with an action
-                action, action_type, eps = self.select_action(state)
-                next_state, reward, done, _ = self.env.step(int(action))
+                action, action_type, eps = self.select_action(state,mask,valid,episode,t)
+                #if action_type=='greedy':
+                #    breakpoint()
+                #if t==0:
+                #    print(self.net(state))
+                next_state_dict, reward, done, _ = self.env.step(int(action))
+                next_state = next_state_dict['features']
+                next_mask = next_state_dict['mask']
+                next_valid = next_state_dict['valid']
                 #if self.reward_map:
                 #    reward = self.reward_mapping(reward)
 
                 # Process next_state into a tensor
-                next_state = torch.from_numpy(next_state).float().to(self.device)
+                next_state = torch.from_numpy(next_state).float()#.to(self.device)
                 
                 # Add step reward to episode reward
                 episode_reward+=reward
@@ -131,42 +156,59 @@ class DQN():
                 self.all_data_df=pd.concat([self.all_data_df, current_df],ignore_index=True)
                 
                 # Append this step to the replay buffer
-                action, reward = torch.IntTensor([action]).to(self.device), torch.FloatTensor([reward]).to(self.device)
+                #action, reward = torch.IntTensor([action]).to(self.device), torch.FloatTensor([reward])#.to(self.device)
+                action, reward = torch.IntTensor([action]), torch.FloatTensor([reward])
                 self.replay_memory.push(state, action, next_state, reward)
 
                 # TO DO - double check on behavior at end of episode
                 state=next_state
+                mask=next_mask
+                valid=next_valid
                 
                 # Optimize the model
-                self.learn()
+                loss = self.learn()
+                current_loss = pd.DataFrame({'loss':loss},index=[0])
+                self.loss_df = pd.concat([self.loss_df, current_loss],ignore_index=True)
                 self.steps+=1
 
                 # If at an update interval, copy policy net to target net
                 if (self.steps % self.sync == 0):
-                    print("Synchronized networks!")
-                    print("Current step: ", self.steps)
+                    self.sync_net()
+                    #print("Synchronized networks!")
+                    #print("Current step: ", self.steps)
 
                 # Truncate episode early if the board is clear
                 if done:
                     break
 
             # Reset the episode reward before the next iteration
+            episode_df = pd.DataFrame({'episode':episode, 'reward':episode_reward},index=[0])
+            self.episode_df=pd.concat([self.episode_df, episode_df],ignore_index=True)
             episode_reward=0
 
 
 
-    def select_action(self,state):
+    def select_action(self,state,mask,valid,ep,t):
         # epsilon greedy policy - epsilon decays exponentially with time
         eps_threshold = self.eps_end + (self.eps_start-self.eps_end)*math.exp(-1*self.steps/self.eps_decay)
 
         # Random exploration action
         if np.random.rand()<eps_threshold: 
-            action = self.env.action_space.sample()
+            #action = self.env.action_space.sample()
+            action = random.choice(valid)
             action_type = 'random'
         # Greedy action per policy
         else:
             with torch.no_grad():
-                action = self.net(state).max(0)[1].to(self.device)
+                q_val = self.net(state)
+                min_val = q_val.min(0)[0]
+                boolmask = torch.BoolTensor(mask)
+                masked_q = q_val.masked_fill(boolmask,min_val)
+                action = masked_q.max(0)[1]
+                #breakpoint()
+                #if (ep%10==0) and (t==0):
+                #    breakpoint()
+                #action = self.net(state).max(0)[1]#.to(self.device)
 
                 # --------------
                 # FOR REFERENCE
@@ -205,10 +247,10 @@ class DQN():
         #print("q values: ", q)
         #print()
         #print("q size: ", q.size())
-        self.t_state = state
-        self.t_action = action
-        self.t_reward = reward
-        self.q = q
+        #self.t_state = state
+        #self.t_action = action
+        #self.t_reward = reward
+        #self.q = q
         td_estimate = q[np.arange(0,self.batch_size),action.to(torch.int64)]
         #print("td_estimate: ",td_estimate)
         #print("td_estimate.size(): ",td_estimate.size())
@@ -225,15 +267,15 @@ class DQN():
 
         # Calculate the loss
         loss = self.loss(td_estimate,td_target)
-
+        #breakpoint()
         # Zero the gradient and calculate the gradient
         self.optimizer.zero_grad()
         loss.backward()
 
         # TO-DO
         # Consider clamping gradients
-        for param in self.net.parameters():
-            param.grad.data.clamp_(-1,1)
+        #for param in self.net.parameters():
+        #    param.grad.data.clamp_(-1,1)
         # print("q values: ", q)
         # print("q size: ", q.size())
         # print("td_estimate: ",td_estimate)
@@ -245,7 +287,9 @@ class DQN():
         # breakpoint()
         # Run optimization step
         self.optimizer.step()
-        return
+        #if loss.item() > 1:
+        #    breakpoint()
+        return loss.item()
     
     # Synchronize the policy net (net) and the target net (target_net)
     def sync_net(self):

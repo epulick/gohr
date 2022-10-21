@@ -23,6 +23,8 @@ def test_driver(args):
     output_dir = args["OUTPUT_DIR"]
 
     agent.all_data_df.to_csv(os.path.join(output_dir, 'move_data.csv'))
+    agent.episode_df.to_csv(os.path.join(output_dir, 'episode_data.csv'))
+    agent.loss_df.to_csv(os.path.join(output_dir, 'loss_data.csv'))
     
     #breakpoint()
 

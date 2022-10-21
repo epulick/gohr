@@ -31,7 +31,9 @@ class NaiveBoard(RuleGameEnv):
     #
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     def get_feature(self):
-
+        feature_dict = {}
+        mask = np.zeros(self.out_dim)
+        inv_mask = np.ones(self.out_dim)
         features = np.zeros((self.board_size, self.board_size, self.shape_space+self.color_space))
 
         # Loop over the corresponding objects on the board (features are already initialized to zero otherwise)
@@ -39,12 +41,21 @@ class NaiveBoard(RuleGameEnv):
             # Extract information associated with current object
             o_row, o_col, o_color, o_shape = object_tuple['y'], object_tuple['x'], self.color_id[object_tuple['color']], self.shape_id[object_tuple['shape']]
             #print(o_row,o_col,o_shape,o_color)
-            
+            #breakpoint()
+            for i in range(self.bucket_space):
+                idx = np.ravel_multi_index((o_row-1,o_col-1,i),(self.board_size,self.board_size,self.bucket_space))
+                mask[idx]=1
+                inv_mask[idx]=0
             # Write out 1's for the objects shape and color (in the correct row,col position in the feature array)
             features[o_row-1][o_col-1][o_shape]=1
             features[o_row-1][o_col-1][self.shape_space+o_color]=1
         #print(features)
-        return features.flatten()
+        features = features.flatten()
+        feature_dict['features']=features
+        feature_dict['mask']=inv_mask
+        feature_dict['valid']=np.nonzero(mask)[0]
+        return feature_dict    
+        #return features.flatten()
 
 def test_featurization(args):
     # some testing code

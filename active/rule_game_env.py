@@ -103,6 +103,7 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         '''
         return o_row+o_col*self.board_size+b_index*self.board_size*self.board_size
 
+    # Note - these two functions don't give equivalent results
     def action_index_to_tuple(self, action):
         '''
             inputs : zero-index flattened action index
