@@ -20,6 +20,9 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         self.action_space = spaces.Discrete(self.board_size*self.board_size*self.bucket_space)
         self.l_shape, self.l_color, self.l_bucket, self.l_index  = -1,-1,-1,-1        # last successful shape, color, bucket, index
         self.c_shape, self.c_color, self.c_bucket, self.c_index  = -1,-1,-1 ,-1       # current shape, color, bucket
+        self.move_list=[]
+        self.last_board = None
+        self.m1 = None
         
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #
@@ -38,7 +41,7 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         self.sample_new_board()
         self.l_shape, self.l_color, self.l_bucket, self.l_index = -1,-1,-1,-1    # reset last successful shape, color, bucket
         self.c_shape, self.c_color, self.c_bucket, self.c_index = -1,-1,-1,-1    # reset current shape, color, bucket
-
+        self.last_board = None
         return self.get_feature()
 
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -69,7 +72,7 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         
         # done : 'True' if the episode ends, response_code : response code of the move - accepted(0) etc.
         done, response_code, reward = self.take_action(action_row_index+1, action_col_index+1, bucket_row, bucket_col)          # cgs requires one-indexed board positions
-        
+        self.m1 = action
         # if response code is 0(action is accepted), update the last successful step information
         # Note that other relevant codes are (as of 10/17/22):
         # 2 (stalemate), 
@@ -79,7 +82,9 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         if(response_code==0):
             #self.l_shape, self.l_color, self.l_bucket, self.l_index = self.c_shape, self.c_color, self.c_bucket, action_row_index*self.board_size+action_col_index
             self.l_shape, self.l_color, self.l_bucket, self.l_index = self.c_shape, self.c_color, self.c_bucket, self.c_index
-            
+            self.move_list=[]
+        else:
+            self.move_list.append(action)
         info, feature = {}, self.get_feature()
 
         return feature, reward, done, info 

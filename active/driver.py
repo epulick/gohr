@@ -12,7 +12,12 @@ from dqn import DQN
 
 def test_driver(args):
     # Test the environment using the yaml input
-    env = NaiveBoard(args)
+    if args['FEATURIZATION']=='NAIVE_BOARD':
+        env = NaiveBoard(args)
+    elif args['FEATURIZATION']=='NAIVE_M1':
+        env = NaiveBoard_m1(args)
+    else:
+        breakpoint()
     phi = env.get_feature()
 
     # Test the DQN creation

@@ -17,4 +17,4 @@ source "$h/scripts/set-var-captive.sh"
 #python3 featurization.py "captive/game/game-data/rules"
 
 # Use to test the driver script (note the shift of the args to a parameter file)
-python3 driver.py "captive/game/game-data/rules" "params/test_param.yaml"
+python3 driver.py "captive/game/game-data/rules/MLC/BMK" "params/test_param.yaml"
