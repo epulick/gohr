@@ -19,7 +19,9 @@ class NaiveBoard(RuleGameEnv):
         # PENDING MODIFICATION
         # defining the feature dimension - circle and bucket-4 indicators removed to avoid over parametrization
         self.action_feature_dim = self.shape_space+self.color_space+self.bucket_space-2    # 10
+        
         self.in_dim = self.board_size*self.board_size*(self.shape_space+self.color_space)
+        #self.in_dim = self.board_size*self.board_size*self.shape_space
         self.out_dim = self.board_size*self.board_size*self.bucket_space
 
         # PENDING MODIFICATION
@@ -35,6 +37,7 @@ class NaiveBoard(RuleGameEnv):
         mask = np.zeros(self.out_dim)
         inv_mask = np.ones(self.out_dim)
         features = np.zeros((self.board_size, self.board_size, self.shape_space+self.color_space))
+        #features = np.zeros((self.board_size,self.board_size,self.shape_space))
 
         # Loop over the corresponding objects on the board (features are already initialized to zero otherwise)
         for object_tuple in self.board:
@@ -94,7 +97,7 @@ if __name__ == "__main__":
             'COLOR_SPACE'  : 4,                 # total possible colors
             'SHAPE_SPACE'  : 4,                 # total possible shapes
             'BUCKET_SPACE'  : 4,                # total buckets
-            'SEED' : 0,
+            'SEED' : -1,
             'RUN_MODE' : "RULE"
         }
 

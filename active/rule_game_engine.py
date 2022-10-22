@@ -29,7 +29,9 @@ class RuleGameEngine():
         self.shape_id = {'STAR':0, 'SQUARE':1, 'TRIANGLE':2, 'CIRCLE':3}
         self.color_id = {'RED':0, 'BLUE':1, 'BLACK':2, 'YELLOW':3}
         # Note: tuples denoted by (row,col) rather than (x,y)
+        
         self.bucket_tuple = {0:(7,0), 1:(7,7), 2:(0,7), 3:(0,0)}
+        #self.bucket_tuple = {0:(7,0), 1:(7,7)}
         self.initial_object_count = int(float(args['INIT_OBJ_COUNT']))
         self.object_space, self.bucket_space, self.color_space, self.shape_space = args['OBJECT_SPACE'], args['BUCKET_SPACE'], args['COLOR_SPACE'], args['SHAPE_SPACE']
         self.index_space = self.board_size*self.board_size

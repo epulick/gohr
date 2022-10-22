@@ -69,6 +69,10 @@ class DQN():
         self.net = self.make_nn(self.in_dim, self.out_dim, args['HIDDEN_SIZES'])#.to(self.device)
         self.target_net = copy.deepcopy(self.net)
 
+        # Q_target parameters are frozen.
+        for p in self.target_net.parameters():
+            p.requires_grad = False
+
         # TO-DO
         # Consider other optimizers via parameter input
         self.optimizer=torch.optim.Adam(self.net.parameters(),args['LR'])
@@ -86,7 +90,8 @@ class DQN():
         self.replay_memory = ReplayMemory(args['REPLAY_BUFFER_SIZE'], self.transitions)
 
     def make_nn(self, in_dim, out_dim, hidden_sizes):
-        activation = nn.ReLU
+        # activation = nn.ReLU
+        activation = nn.LeakyReLU
         sizes = [in_dim] + hidden_sizes + [out_dim]
         layers = []
         for i in range(len(sizes)-2):
@@ -166,7 +171,7 @@ class DQN():
                 valid=next_valid
                 
                 # Optimize the model
-                loss = self.learn()
+                loss = self.learn(episode,t)
                 current_loss = pd.DataFrame({'loss':loss},index=[0])
                 self.loss_df = pd.concat([self.loss_df, current_loss],ignore_index=True)
                 self.steps+=1
@@ -191,7 +196,7 @@ class DQN():
     def select_action(self,state,mask,valid,ep,t):
         # epsilon greedy policy - epsilon decays exponentially with time
         eps_threshold = self.eps_end + (self.eps_start-self.eps_end)*math.exp(-1*self.steps/self.eps_decay)
-
+        broken = False
         # Random exploration action
         if np.random.rand()<eps_threshold: 
             #action = self.env.action_space.sample()
@@ -206,7 +211,7 @@ class DQN():
                 masked_q = q_val.masked_fill(boolmask,min_val)
                 action = masked_q.max(0)[1]
                 #breakpoint()
-                #if (ep%10==0) and (t==0):
+                #if (ep%2000==0):
                 #    breakpoint()
                 #action = self.net(state).max(0)[1]#.to(self.device)
 
@@ -225,7 +230,7 @@ class DQN():
             action_type = 'greedy'
         return action, action_type, eps_threshold
         
-    def learn(self):
+    def learn(self,ep, t):
         
         # Can only optimize if the buffer filled above the batch threshold
         if len(self.replay_memory) < self.batch_size:
@@ -242,7 +247,7 @@ class DQN():
         # print("action size: ", action.size())
         # print("reward: ", reward)
         # print("reward size: ", reward.size())
-
+        
         q = self.net(state)
         #print("q values: ", q)
         #print()
@@ -251,14 +256,16 @@ class DQN():
         #self.t_action = action
         #self.t_reward = reward
         #self.q = q
-        td_estimate = q[np.arange(0,self.batch_size),action.to(torch.int64)]
+        td_estimate = self.net(state).gather(1,action.to(torch.int64))
+        #td_estimate = q[np.arange(0,self.batch_size),action.to(torch.int64)]
         #print("td_estimate: ",td_estimate)
         #print("td_estimate.size(): ",td_estimate.size())
         with torch.no_grad():
             net_next_q = self.net(next_state)
             target_next_q = self.target_net(next_state)
-            net_action = torch.argmax(net_next_q,axis=1)
-            target_net_q = target_next_q[np.arange(0,self.batch_size),net_action]
+            net_action = torch.argmax(net_next_q,axis=1).unsqueeze(1)
+            target_net_q = target_next_q.gather(1,net_action)
+            #target_net_q = target_next_q[np.arange(0,self.batch_size),net_action]
         
         # TO-DO modify this to consider end-of-episode behavior correctly (1-done?)
         td_target = (reward + self.gamma *target_net_q).float()
@@ -267,15 +274,16 @@ class DQN():
 
         # Calculate the loss
         loss = self.loss(td_estimate,td_target)
-        #breakpoint()
+        #if (ep%200==0) and t<=10:
+        #    breakpoint()
         # Zero the gradient and calculate the gradient
         self.optimizer.zero_grad()
         loss.backward()
 
         # TO-DO
         # Consider clamping gradients
-        #for param in self.net.parameters():
-        #    param.grad.data.clamp_(-1,1)
+        for param in self.net.parameters():
+            param.grad.data.clamp_(-1,1)
         # print("q values: ", q)
         # print("q size: ", q.size())
         # print("td_estimate: ",td_estimate)
