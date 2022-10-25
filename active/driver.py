@@ -9,7 +9,25 @@ from rule_sets import *
 from featurization import *
 from dqn import DQN
 
+def single_execution(args):
+    pass
 
+def run_experiment(args):
+
+    # Generate random seeds for engine, pytorch, numpy, and random
+    if args['SEED'] == -1:
+        seeds1 = np.random.randint(1, 2**32-2, size = args["REPEAT"])
+        seeds2 = np.random.randint(1, 2**32-2, size = args["REPEAT"])
+        seeds3 = np.random.randint(1, 2**32-2, size = args["REPEAT"])
+        seeds4 = np.random.randint(1, 2**32-2, size = args["REPEAT"])
+        # Update the seeds in the parameter file
+        args.update({"SEEDS1": seeds1, "SEEDS2": seeds2, "SEEDS3": seeds3, "SEEDS4": seeds4})
+
+    exp = None
+
+    if(args['RECORD']):
+        exp_dir = args['EXP_DIR']
+        
 def test_driver(args):
     # Test the environment using the yaml input
     if args['FEATURIZATION']=='NAIVE_BOARD':
