@@ -45,6 +45,11 @@ def single_execution(args):
     # Create the agent and train it
     agent = DQN(env,args)
     agent.train()
+    # print("--------------------")
+    # print("--------------------")
+    # print("Errors made in this trajectory: ", agent.env.error_count)
+    # print("--------------------")
+    # print("--------------------")
 
     # Create the output directory for generated files
     run_dir = os.path.join(exp_dir, str(run_id))
@@ -54,6 +59,7 @@ def single_execution(args):
     agent.all_data_df.to_csv(os.path.join(run_dir, 'move_data.csv'))
     agent.episode_df.to_csv(os.path.join(run_dir, 'episode_data.csv'))
     agent.loss_df.to_csv(os.path.join(run_dir, 'loss_data.csv'))
+    return agent.env.error_count
 
 # Run a set of training trajectories for the learner (with the same parameters)
 def run_experiment(args):
@@ -82,30 +88,42 @@ def run_experiment(args):
     args.update({'EXP_DIR' : exp_dir, 'EXP_ID' : exp_id})
     if(not os.path.exists(exp_dir)):
         os.makedirs(exp_dir)
+    
+    outputs = []
+    if args["PARALLEL"] == True:
+        # Pull in the number of trials and the number of runs to do in parallel (batch size)
+        num_jobs, batch_size = args['REPEAT'], args['BATCH_SIZE']
 
-    # Pull in the number of trials and the number of runs to do in parallel (batch size)
-    num_jobs, batch_size = args['REPEAT'], args['BATCH_SIZE']
+        # Work through all the jobs, knocking out up to <batch_size> at a time
+        for batch_id in range(int(num_jobs/batch_size)):
+            # Generate the list of trials
+            id_list = np.arange(batch_id*batch_size, (batch_id+1)*batch_size)
+            #print(id_list)
+            # Create a list of argument dictionaries to be used across the trials
+            args_list = []
+            # Loop over all the trials in this particular batch
+            for run_id in id_list:
+                nargs = copy.deepcopy(args)
+                nargs.update({'RUN_ID':run_id})
+                args_list.append(nargs)
 
-    # Work through all the jobs, knocking out up to <batch_size> at a time
-    for batch_id in range(ceil(num_jobs/batch_size)):
-        # Generate the list of trials
-        id_list = np.arange(batch_id*batch_size, (batch_id+1)*batch_size)
-
-        # Create a list of argument dictionaries to be used across the trials
+            # Parallelize the runs in this batch
+            output_list = Parallel(n_jobs=batch_size)(delayed(single_execution)(args) for args in args_list)
+            outputs.append(output_list)
+    else:
+        id_list = np.arange(0,args['REPEAT'])
         args_list = []
-        # Loop over all the trials in this particular batch
         for run_id in id_list:
             nargs = copy.deepcopy(args)
             nargs.update({'RUN_ID':run_id})
-            args_list.append(nargs)
+            output = single_execution(nargs)
+            outputs.append(output)
 
-        # Parallelize the runs in this batch
-        output_list = Parallel(n_jobs=batch_size)(delayed(single_execution)(args) for args in args_list)
-    
     # Close out the run as needed
     if args['RECORD']:
         run["params"]=args
         run.stop()
+    return outputs
 
 # Function for testing this level of abstraction - may not be updated reliably
 def test_driver(args):
@@ -113,7 +131,7 @@ def test_driver(args):
     if args['FEATURIZATION']=='NAIVE_BOARD':
         env = NaiveBoard(args)
     elif args['FEATURIZATION']=='NAIVE_M1':
-        env = NaiveBoard_m1(args)
+        env = NaiveBoard_N(args)
     else:
         breakpoint()
     phi = env.get_feature()

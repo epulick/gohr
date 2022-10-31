@@ -79,6 +79,7 @@ class DQN():
             )
             self.run = run
             self.run_id = args["RUN_ID"]
+        else: self.run = None
         
         # Misc. parameter import
         self.eps_start, self.eps_end, self.eps_decay = args["EPS_START"], args['EPS_END'], args['EPS_DECAY']
