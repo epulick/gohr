@@ -11,7 +11,7 @@ def objective(trial, args):
     n_layers = trial.suggest_int('n_layers', 1,2)
     LR = trial.suggest_float('LR',0.00001,.001)
     hidden_sizes = []
-    size = trial.suggest_int('size',100,300)
+    size = trial.suggest_int('size',100,400)
     decay = trial.suggest_int('decay',200,2000)
     for i in range(n_layers):
         hidden_sizes.append(size)
@@ -23,7 +23,7 @@ def objective(trial, args):
 
 def hyperparameter_tuning(args,hyp):
     study = optuna.create_study(direction = "minimize")
-    study.optimize(lambda trial: objective(trial,args),n_trials=200)
+    study.optimize(lambda trial: objective(trial,args),n_trials=20)
 
     #pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     #complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])

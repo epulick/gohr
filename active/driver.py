@@ -45,6 +45,8 @@ def single_execution(args):
     # Create the agent and train it
     agent = DQN(env,args)
     agent.train()
+    error_count = agent.env.error_count
+    agent.env.close_channel()
     # print("--------------------")
     # print("--------------------")
     # print("Errors made in this trajectory: ", agent.env.error_count)
