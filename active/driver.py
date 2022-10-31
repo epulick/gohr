@@ -132,7 +132,7 @@ def test_driver(args):
     # Test the environment using the yaml input
     if args['FEATURIZATION']=='NAIVE_BOARD':
         env = NaiveBoard(args)
-    elif args['FEATURIZATION']=='NAIVE_M1':
+    elif args['FEATURIZATION']=='NAIVE_N':
         env = NaiveBoard_N(args)
     else:
         breakpoint()

@@ -62,10 +62,12 @@ class NaiveBoard_N(RuleGameEnv):
 
     def __init__(self, args):
         super(NaiveBoard_N, self).__init__(args)
-        
-        self.offset = self.board_size*self.board_size*(self.shape_space+self.color_space)
+        self.board_representation_size = self.board_size*self.board_size*(self.shape_space+self.color_space)
         self.out_dim = self.board_size*self.board_size*self.bucket_space
-        self.in_dim = (self.offset)*2 + self.out_dim
+        self.in_dim = self.n_steps*(self.board_representation_size + self.out_dim) + self.board_representation_size
+        print("in_dim: ", self.in_dim)
+        print("out_dim: ", self.out_dim)
+        print("n_steps: ", self.n_steps)
 
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #
@@ -76,7 +78,9 @@ class NaiveBoard_N(RuleGameEnv):
         feature_dict = {}
         mask = np.zeros(self.out_dim)
         inv_mask = np.ones(self.out_dim)
-        features = np.zeros((self.board_size,self.board_size,self.shape_space+self.color_space,2))
+        features = np.zeros((self.board_size,self.board_size,self.shape_space+self.color_space))
+        step_features = np.zeros((self.board_size,self.board_size,self.shape_space+self.color_space))
+        step_move = np.zeros(self.out_dim)
 
         # Loop over the corresponding objects on the board (features are already initialized to zero otherwise)
         for object_tuple in self.board:
@@ -89,20 +93,21 @@ class NaiveBoard_N(RuleGameEnv):
                 mask[idx]=1
                 inv_mask[idx]=0
             # Write out 1's for the objects shape and color (in the correct row,col position in the feature array)
-            features[o_row-1][o_col-1][o_shape][0]=1
-            features[o_row-1][o_col-1][self.shape_space+o_color][0]=1
-        if self.last_board is not None:
-            for object_tuple in self.last_board:
-                o_row, o_col, o_color, o_shape = object_tuple['y'], object_tuple['x'], self.color_id[object_tuple['color']], self.shape_id[object_tuple['shape']]
-                features[o_row-1][o_col-1][o_shape][1]=1
-                features[o_row-1][o_col-1][self.shape_space+o_color][1]=1
-        #print(features)
+            features[o_row-1][o_col-1][o_shape]=1
+            features[o_row-1][o_col-1][self.shape_space+o_color]=1
         features = features.flatten()
-        m1 = np.zeros(self.out_dim)
-        if self.m1 is not None:
-            m1[self.m1]=1
-        #breakpoint()
-        features=np.concatenate((features,m1),axis=0)
+        for step in range(self.n_steps):
+            if self.last_boards[step] is not None:
+                for object_tuple in self.last_boards[step]:
+                    o_row, o_col, o_color, o_shape = object_tuple['y'], object_tuple['x'], self.color_id[object_tuple['color']], self.shape_id[object_tuple['shape']]
+                    step_features[o_row-1][o_col-1][o_shape]=1
+                    step_features[o_row-1][o_col-1][self.shape_space+o_color]=1
+            step_features = step_features.flatten()
+            if self.last_moves[step] is not None:
+                step_move[self.last_moves[step]] = 1
+            features = np.concatenate((features,step_features,step_move),axis=0)
+            step_features = np.zeros((self.board_size,self.board_size,self.shape_space+self.color_space))
+            step_move = np.zeros(self.out_dim)
         for inv in self.move_list:
             mask[inv] = 0
             inv_mask[inv]=1
@@ -110,12 +115,12 @@ class NaiveBoard_N(RuleGameEnv):
         feature_dict['mask']=inv_mask
         feature_dict['valid']=np.nonzero(mask)[0]
         self.last_board = self.board
-        return feature_dict    
-        #return features.flatten()
+        return feature_dict   
 
 def test_featurization(args):
     # Testing code for this level of abstraction - this may not be updated reliably
-    env = NaiveBoard(args)
+    #env = NaiveBoard(args)
+    env = NaiveBoard_N(args)
     phi = env.get_feature()
     breakpoint()
 
@@ -151,7 +156,8 @@ if __name__ == "__main__":
             'SHAPE_SPACE'  : 4,                 # total possible shapes
             'BUCKET_SPACE'  : 4,                # total buckets
             'SEED' : -1,
-            'RUN_MODE' : "RULE"
+            'RUN_MODE' : "RULE",
+            'N_STEPS' : 1
         }
 
     test_featurization(args)

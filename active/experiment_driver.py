@@ -23,7 +23,7 @@ def objective(trial, args):
 
 def hyperparameter_tuning(args,hyp):
     study = optuna.create_study(direction = "minimize")
-    study.optimize(lambda trial: objective(trial,args),n_trials=20)
+    study.optimize(lambda trial: objective(trial,args),n_trials=10)
 
     #pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     #complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])

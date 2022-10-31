@@ -3,6 +3,7 @@
 
 import numpy as np
 import gym, os, sys
+import traceback
 from gym import spaces
 from rule_game_engine import *
 
@@ -21,8 +22,13 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         self.l_shape, self.l_color, self.l_bucket, self.l_index  = -1,-1,-1,-1        # last successful shape, color, bucket, index
         self.c_shape, self.c_color, self.c_bucket, self.c_index  = -1,-1,-1 ,-1       # current shape, color, bucket
         self.move_list=[]
-        self.last_board = None
-        self.m1 = None
+        self.last_boards = []
+        self.last_moves = []
+        self.prev_board = None
+        self.n_steps = args['N_STEPS']
+        for i in range(self.n_steps):
+            self.last_boards.append(None)
+            self.last_moves.append(None)
         self.error_count = 0
         
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -72,18 +78,25 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         self.c_index = action_row_index*self.board_size+action_col_index                                                    # cgs specifies bucket with (row, column) tuple
         
         # done : 'True' if the episode ends, response_code : response code of the move - accepted(0) etc.
+        self.prev_board = self.board
         done, response_code, reward = self.take_action(action_row_index+1, action_col_index+1, bucket_row, bucket_col)          # cgs requires one-indexed board positions
-        self.m1 = action
+        
         # if response code is 0(action is accepted), update the last successful step information
         # Note that other relevant codes are (as of 10/17/22):
         # 2 (stalemate), 
         # 3 (move rejected because cell is empty), 
         # 4 (move rejected because object not permitted in that bucket), 
         # 7 (move rejected since piece is immovable)
+
         if(response_code==0):
             #self.l_shape, self.l_color, self.l_bucket, self.l_index = self.c_shape, self.c_color, self.c_bucket, action_row_index*self.board_size+action_col_index
             self.l_shape, self.l_color, self.l_bucket, self.l_index = self.c_shape, self.c_color, self.c_bucket, self.c_index
             self.move_list=[]
+            # Record the successful move internally for n_steps of memory
+            self.last_moves.pop(0)
+            self.last_moves.append(action)
+            self.last_boards.pop(0)
+            self.last_boards.append(self.prev_board)
         else:
             self.move_list.append(action)
             self.error_count+=1
@@ -103,14 +116,16 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         print("Current board feature")
         print(self.get_feature())
 
-    def action_tuple_to_index(self, o_row, o_col, b_index):
+    #def action_tuple_to_index(self, o_row, o_col, b_index):
         '''
             inputs : zero-index action tuple  (o_row, o_col, b_index)
             output : zero-index flattened action index
         '''
-        return o_row+o_col*self.board_size+b_index*self.board_size*self.board_size
+    #   return o_row+o_col*self.board_size+b_index*self.board_size*self.board_size
+    def action_tuple_to_index(self, o_row, o_col, b_index):
 
-    # Note - these two functions don't give equivalent results
+        return np.ravel_multi_index((o_row,o_col,b_index),(self.board_size,self.board_size,self.bucket_space))
+
     def action_index_to_tuple(self, action):
         '''
             inputs : zero-index flattened action index
