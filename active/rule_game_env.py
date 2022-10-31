@@ -23,6 +23,7 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         self.move_list=[]
         self.last_board = None
         self.m1 = None
+        self.error_count = 0
         
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #
@@ -85,6 +86,7 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
             self.move_list=[]
         else:
             self.move_list.append(action)
+            self.error_count+=1
         info, feature = {}, self.get_feature()
 
         return feature, reward, done, info 

@@ -136,3 +136,7 @@ captive/
 
 # Ignore outputs
 outputs/
+
+# Ignore neptune file
+**neptune.py
+**.neptune

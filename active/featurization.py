@@ -15,18 +15,9 @@ class NaiveBoard(RuleGameEnv):
 
     def __init__(self, args):
         super(NaiveBoard, self).__init__(args)
-
-        # PENDING MODIFICATION
-        # defining the feature dimension - circle and bucket-4 indicators removed to avoid over parametrization
-        self.action_feature_dim = self.shape_space+self.color_space+self.bucket_space-2    # 10
         
         self.in_dim = self.board_size*self.board_size*(self.shape_space+self.color_space)
-        #self.in_dim = self.board_size*self.board_size*self.shape_space
         self.out_dim = self.board_size*self.board_size*self.bucket_space
-
-        # PENDING MODIFICATION
-        # define observation space of the model, in our case it corresponds to the feature dimension(which is 10 dimensional in this example) for each action
-        self.observation_space = spaces.Box(low=0, high=1, shape=(self.board_size*self.board_size*self.bucket_space,self.action_feature_dim), dtype=int)
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #
     #   Create feature vector with 1's corresponding to objects on the board
@@ -37,7 +28,6 @@ class NaiveBoard(RuleGameEnv):
         mask = np.zeros(self.out_dim)
         inv_mask = np.ones(self.out_dim)
         features = np.zeros((self.board_size, self.board_size, self.shape_space+self.color_space))
-        #features = np.zeros((self.board_size,self.board_size,self.shape_space))
 
         # Loop over the corresponding objects on the board (features are already initialized to zero otherwise)
         for object_tuple in self.board:
@@ -60,32 +50,23 @@ class NaiveBoard(RuleGameEnv):
         feature_dict['features']=features
         feature_dict['mask']=inv_mask
         feature_dict['valid']=np.nonzero(mask)[0]
-        return feature_dict    
-        #return features.flatten()
+        return feature_dict
 
-class NaiveBoard_m1(RuleGameEnv):
+class NaiveBoard_N(RuleGameEnv):
    
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #
-    #      This class constructs a memoryless, one hot representation of the board state 
+    #      This class constructs a one hot representation of the board state with n-steps of memory
     #
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     def __init__(self, args):
-        super(NaiveBoard_m1, self).__init__(args)
-
-        # PENDING MODIFICATION
-        # defining the feature dimension - circle and bucket-4 indicators removed to avoid over parametrization
-        self.action_feature_dim = self.shape_space+self.color_space+self.bucket_space-2    # 10
+        super(NaiveBoard_N, self).__init__(args)
         
-        #self.in_dim = self.board_size*self.board_size*self.shape_space
         self.offset = self.board_size*self.board_size*(self.shape_space+self.color_space)
         self.out_dim = self.board_size*self.board_size*self.bucket_space
         self.in_dim = (self.offset)*2 + self.out_dim
-    
-        # PENDING MODIFICATION
-        # define observation space of the model, in our case it corresponds to the feature dimension(which is 10 dimensional in this example) for each action
-        self.observation_space = spaces.Box(low=0, high=1, shape=(self.board_size*self.board_size*self.bucket_space,self.action_feature_dim), dtype=int)
+
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #
     #   Create feature vector with 1's corresponding to objects on the board
@@ -96,7 +77,6 @@ class NaiveBoard_m1(RuleGameEnv):
         mask = np.zeros(self.out_dim)
         inv_mask = np.ones(self.out_dim)
         features = np.zeros((self.board_size,self.board_size,self.shape_space+self.color_space,2))
-        #features = np.zeros((self.board_size,self.board_size,self.shape_space))
 
         # Loop over the corresponding objects on the board (features are already initialized to zero otherwise)
         for object_tuple in self.board:
@@ -134,7 +114,7 @@ class NaiveBoard_m1(RuleGameEnv):
         #return features.flatten()
 
 def test_featurization(args):
-    # some testing code
+    # Testing code for this level of abstraction - this may not be updated reliably
     env = NaiveBoard(args)
     phi = env.get_feature()
     breakpoint()
