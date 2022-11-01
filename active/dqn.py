@@ -104,8 +104,15 @@ class DQN():
 
         # TO-DO
         # Consider other optimizers or losses via parameter input
-        self.optimizer=torch.optim.Adam(self.net.parameters(),args['LR'])
-        self.loss = nn.SmoothL1Loss()
+        if args['OPTIMIZER'] == 'ADAM':
+            self.optimizer=torch.optim.Adam(self.net.parameters(),args['LR'])
+        elif args['OPTIMIZER'] == 'RMSprop':
+            self.optimizer=torch.optim.RMSprop(self.net.parameters(),args['LR'])
+        elif args['OPTIMIZER'] == 'SGD':
+            self.optimizer=torch.optim.SGD(self.net.parameters(),args['LR'])
+        else:
+            breakpoint()
+        self.loss = nn.MSELoss()
 
         # Set up dataframe for recording the results
         # to do - consider adding return code (some pieces are more informative than others)
