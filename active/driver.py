@@ -37,7 +37,7 @@ def single_execution(args):
     # Choose the desired featurization
     if args['FEATURIZATION']=='NAIVE_BOARD':
         env = NaiveBoard(args)
-    elif args['FEATURIZATION']=='NAIVE_M1':
+    elif args['FEATURIZATION']=='NAIVE_N':
         env = NaiveBoard_N(args)
     else:
         breakpoint()
