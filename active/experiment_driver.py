@@ -13,12 +13,14 @@ def objective(trial, args):
     hidden_sizes = []
     size = trial.suggest_int('size',100,400)
     decay = trial.suggest_int('decay',200,2000)
-    
+    optimizer = trial.suggest_categorical('optimizer',['SGD','ADAM','RMSprop'])
+
     for i in range(n_layers):
         hidden_sizes.append(size)
     args.update({'HIDDEN_SIZES':hidden_sizes})
     args.update({'LR':LR})
     args.update({'EPS_DECAY':decay})
+    args.update({'OPTIMIZER':optimizer})
     results = run_experiment(args)
     return np.median(results)
 
