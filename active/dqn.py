@@ -112,7 +112,7 @@ class DQN():
             self.optimizer=torch.optim.SGD(self.net.parameters(),args['LR'])
         else:
             breakpoint()
-        self.loss = nn.MSELoss()
+        self.loss = nn.SmoothL1Loss()
 
         # Set up dataframe for recording the results
         # to do - consider adding return code (some pieces are more informative than others)
