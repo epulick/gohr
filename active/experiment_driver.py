@@ -23,7 +23,7 @@ def objective(trial, args):
     args.update({'HIDDEN_SIZES':hidden_sizes})
     args.update({'LR':LR})
     args.update({'EPS_DECAY':decay})
-    args.update({'GRAD_BATCH':batch})
+    args.update({'GRAD_BATCH_SIZE':batch})
     args.update({'CLAMP':clamp})
     args.update({'GAMMA':gamma})
     #args.update({'OPTIMIZER':optimizer})
