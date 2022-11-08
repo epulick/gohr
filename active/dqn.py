@@ -116,7 +116,8 @@ class DQN():
 
         # Set up dataframe for recording the results
         # to do - consider adding return code (some pieces are more informative than others)
-        self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon', 'other'])
+        #self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon','board','valid','debug_q','zero_ind_action_tuple', 'other'])
+        self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon', 'board', 'other'])
         self.loss_df = pd.DataFrame(columns= ['loss'])
         self.episode_df = pd.DataFrame(columns=['episode','reward'])
 
@@ -151,7 +152,7 @@ class DQN():
             # Loop over the per-episode training horizon
             for t in range(self.train_horizon):
                 # Step the environment forward with an action
-                action, action_type, eps = self.select_action(state,mask,valid,episode,t)
+                action, action_type, eps, debug_q = self.select_action(state,mask,valid,episode,t)
                 next_state_dict, reward, done, _ = self.env.step(int(action))
                 next_state = next_state_dict['features']
                 next_mask = next_state_dict['mask']
@@ -164,7 +165,11 @@ class DQN():
                 episode_reward+=reward
 
                 # Write current step's data to a dataframe and concat with the main dataframe
-                current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':action_type, 'action':int(action), 'reward':int(reward), 'done':done, 'epsilon':eps, 'other':'none'},index=[0])
+                #breakpoint()
+                #current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':action_type, 'action':int(action), 'reward':int(reward), 'done':done, 'epsilon':eps,'board':[self.env.board],'valid':[valid],'debug_q':[debug_q], 'zero_ind_action_tuple':[self.env.action_index_to_tuple(action)], 'other':'none'},index=[0])
+                #breakpoint()
+                current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':action_type, 'action':int(action), 'reward':int(reward), 'done':done, 'epsilon':eps,'board':[self.env.board], 'other':'none'},index=[0])
+                #breakpoint()
                 self.all_data_df=pd.concat([self.all_data_df, current_df],ignore_index=True)
                 
                 # Append this step to the replay buffer
@@ -205,12 +210,12 @@ class DQN():
         # epsilon greedy policy - epsilon decays exponentially with time
         eps_threshold = self.eps_end + (self.eps_start-self.eps_end)*math.exp(-1*self.steps/self.eps_decay)
         broken = False
-
+        with torch.no_grad():
+            debug_q = self.net(state)[valid]
         # Random exploration action
         if np.random.rand()<eps_threshold:
             # Choose an action from the provided list of valid actions
             action = random.choice(valid)
-
             # Alternative implementation which doesn't mask out 'invalid actions'
             #action = self.env.action_space.sample()
 
@@ -219,6 +224,7 @@ class DQN():
         # Greedy action per policy
         else:
             with torch.no_grad():
+                #breakpoint()
                 q_val = self.net(state)
                 min_val = q_val.min(0)[0]
                 boolmask = torch.BoolTensor(mask)
@@ -232,7 +238,7 @@ class DQN():
                 #print("self.net(state).max(1)[1]: ",self.net(state).max(0)[1])
                 
             action_type = 'greedy'
-        return action, action_type, eps_threshold
+        return action, action_type, eps_threshold, debug_q
         
     def learn(self,ep, t):
         

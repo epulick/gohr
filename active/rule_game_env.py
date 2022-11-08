@@ -48,7 +48,13 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         self.sample_new_board()
         self.l_shape, self.l_color, self.l_bucket, self.l_index = -1,-1,-1,-1    # reset last successful shape, color, bucket
         self.c_shape, self.c_color, self.c_bucket, self.c_index = -1,-1,-1,-1    # reset current shape, color, bucket
-        self.last_board = None
+        #self.last_board = None
+        self.last_boards = []
+        self.last_moves = []
+        for i in range(self.n_steps):
+            self.last_boards.append(None)
+            self.last_moves.append(None)
+        #breakpoint()
         return self.get_feature()
 
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

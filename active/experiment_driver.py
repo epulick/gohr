@@ -8,15 +8,15 @@ from driver import *
 from dqn import DQN
 
 def objective(trial, args):
-    n_layers = trial.suggest_int('n_layers', 1,2)
+    n_layers = trial.suggest_int('n_layers', 1,3)
     LR = trial.suggest_float('LR',0.00001,.001)
     hidden_sizes = []
-    gamma = trial.suggest_float('gamma',0.01,0.5)
-    size = trial.suggest_int('size',100,400)
-    decay = trial.suggest_int('decay',200,2000)
+    gamma = trial.suggest_float('gamma',0.01,0.4)
+    size = trial.suggest_int('size',100,500)
+    decay = trial.suggest_int('decay',100,1000)
     batch = trial.suggest_int('grad_batch',50,300)
     clamp = trial.suggest_int('clamp',0,1)
-    #optimizer = trial.suggest_categorical('optimizer',['SGD','ADAM','RMSprop'])
+    optimizer = trial.suggest_categorical('optimizer',['ADAM','RMSprop'])
 
     for i in range(n_layers):
         hidden_sizes.append(size)
@@ -26,7 +26,7 @@ def objective(trial, args):
     args.update({'GRAD_BATCH_SIZE':batch})
     args.update({'CLAMP':clamp})
     args.update({'GAMMA':gamma})
-    #args.update({'OPTIMIZER':optimizer})
+    args.update({'OPTIMIZER':optimizer})
     results = run_experiment(args)
     return np.median(results)
 

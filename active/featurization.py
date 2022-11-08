@@ -65,9 +65,9 @@ class NaiveBoard_N(RuleGameEnv):
         self.board_representation_size = self.board_size*self.board_size*(self.shape_space+self.color_space)
         self.out_dim = self.board_size*self.board_size*self.bucket_space
         self.in_dim = self.n_steps*(self.board_representation_size + self.out_dim) + self.board_representation_size
-        print("in_dim: ", self.in_dim)
-        print("out_dim: ", self.out_dim)
-        print("n_steps: ", self.n_steps)
+        #print("in_dim: ", self.in_dim)
+        #print("out_dim: ", self.out_dim)
+        #print("n_steps: ", self.n_steps)
 
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #
@@ -104,17 +104,21 @@ class NaiveBoard_N(RuleGameEnv):
                     step_features[o_row-1][o_col-1][self.shape_space+o_color]=1
             step_features = step_features.flatten()
             if self.last_moves[step] is not None:
+                #if sum(x is not None for x in self.last_moves)==3:
+                #    breakpoint()
                 step_move[self.last_moves[step]] = 1
             features = np.concatenate((features,step_features,step_move),axis=0)
             step_features = np.zeros((self.board_size,self.board_size,self.shape_space+self.color_space))
             step_move = np.zeros(self.out_dim)
+            #if sum(x is not None for x in self.last_moves)==3:
+            #    breakpoint()
         for inv in self.move_list:
             mask[inv] = 0
             inv_mask[inv]=1
         feature_dict['features']=features
         feature_dict['mask']=inv_mask
         feature_dict['valid']=np.nonzero(mask)[0]
-        self.last_board = self.board
+        #self.last_board = self.board
         return feature_dict   
 
 def test_featurization(args):
