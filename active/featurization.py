@@ -121,6 +121,83 @@ class NaiveBoard_N(RuleGameEnv):
         #self.last_board = self.board
         return feature_dict   
 
+class NaiveBoard_N_dense(RuleGameEnv):
+   
+    #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    #
+    #      This class constructs a one hot representation of the board state with n-steps of memory
+    #
+    #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    def __init__(self, args):
+        super(NaiveBoard_N_dense, self).__init__(args)
+        #self.board_representation_size = self.board_size*self.board_size*(self.shape_space+self.color_space)
+        self.out_dim = self.board_size*self.board_size*self.bucket_space
+        self.dense_action_dim = self.board_size+self.board_size+self.bucket_space
+        self.in_dim = self.n_steps*(self.color_space+self.shape_space + self.dense_action_dim) + self.board_size*self.board_size*(self.shape_space+self.color_space)
+        #print("in_dim: ", self.in_dim)
+        #print("out_dim: ", self.out_dim)
+        #print("n_steps: ", self.n_steps)
+
+    #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    #
+    #   Create feature vector with 1's corresponding to objects on the board
+    #
+    #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    def get_feature(self):
+        feature_dict = {}
+        mask = np.zeros(self.out_dim)
+        inv_mask = np.ones(self.out_dim)
+        features = np.zeros((self.board_size,self.board_size,self.shape_space+self.color_space))
+        step_features = np.zeros(self.shape_space+self.color_space)
+        step_move = np.zeros(self.dense_action_dim)
+
+        # Loop over the corresponding objects on the board (features are already initialized to zero otherwise)
+        for object_tuple in self.board:
+            # Extract information associated with current object
+            o_row, o_col, o_color, o_shape = object_tuple['y'], object_tuple['x'], self.color_id[object_tuple['color']], self.shape_id[object_tuple['shape']]
+            #print(o_row,o_col,o_shape,o_color)
+            #breakpoint()
+            for i in range(self.bucket_space):
+                idx = np.ravel_multi_index((o_row-1,o_col-1,i),(self.board_size,self.board_size,self.bucket_space))
+                mask[idx]=1
+                inv_mask[idx]=0
+            # Write out 1's for the objects shape and color (in the correct row,col position in the feature array)
+            features[o_row-1][o_col-1][o_shape]=1
+            features[o_row-1][o_col-1][self.shape_space+o_color]=1
+        features = features.flatten()
+        for step in range(self.n_steps):
+            if self.last_attributes[step] is not None:
+                #for object_tuple in self.last_boards[step]:
+                #    o_row, o_col, o_color, o_shape = object_tuple['y'], object_tuple['x'], self.color_id[object_tuple['color']], self.shape_id[object_tuple['shape']]
+                #    step_features[o_row-1][o_col-1][o_shape]=1
+                #    step_features[o_row-1][o_col-1][self.shape_space+o_color]=1
+                step_features[self.last_attributes[step][0]]=1
+                step_features[self.last_attributes[step][1]+self.shape_space]=1
+            if self.last_moves[step] is not None:
+                #if sum(x is not None for x in self.last_moves)==3:
+                #    breakpoint()
+                row,col,bucket = self.action_index_to_tuple(self.last_moves[step])
+                #row+=1
+                #col+=1
+                #bucket+=1
+                step_move[row] = 1
+                step_move[self.board_size+col]=1
+                step_move[self.board_size+self.board_size+bucket]=1
+            features = np.concatenate((features,step_features,step_move),axis=0)
+            step_features = np.zeros(self.shape_space+self.color_space)
+            step_move = np.zeros(self.dense_action_dim)
+            #if sum(x is not None for x in self.last_moves)==3:
+            #    breakpoint()
+        for inv in self.move_list:
+            mask[inv] = 0
+            inv_mask[inv]=1
+        feature_dict['features']=features
+        feature_dict['mask']=inv_mask
+        feature_dict['valid']=np.nonzero(mask)[0]
+        #self.last_board = self.board
+        return feature_dict 
+
 def test_featurization(args):
     # Testing code for this level of abstraction - this may not be updated reliably
     #env = NaiveBoard(args)

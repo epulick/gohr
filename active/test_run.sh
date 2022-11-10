@@ -23,4 +23,4 @@ source "$h/scripts/set-var-captive.sh"
 python3 experiment_driver.py "captive/game/game-data/rules" "params/test_param.yaml"
 
 # Use for hyperparameter tuning
-#python3 experiment_driver.py "captive/game/game-data/rules" "params/tuning_runs/current/naive_n8_Rule_001_8reps.yaml"
+#python3 experiment_driver.py "captive/game/game-data/rules" "params/tuning_runs/current/naive_n8_clockwiseTwoFree_8reps.yaml"

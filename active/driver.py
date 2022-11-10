@@ -39,6 +39,8 @@ def single_execution(args):
         env = NaiveBoard(args)
     elif args['FEATURIZATION']=='NAIVE_N':
         env = NaiveBoard_N(args)
+    elif args['FEATURIZATION']=='NAIVE_N_DENSE':
+        env= NaiveBoard_N_dense(args)
     else:
         breakpoint()
 

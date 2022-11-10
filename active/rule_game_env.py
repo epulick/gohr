@@ -20,15 +20,18 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         # define an action space with possible number of distinct actions
         self.action_space = spaces.Discrete(self.board_size*self.board_size*self.bucket_space)
         self.l_shape, self.l_color, self.l_bucket, self.l_index  = -1,-1,-1,-1        # last successful shape, color, bucket, index
-        self.c_shape, self.c_color, self.c_bucket, self.c_index  = -1,-1,-1 ,-1       # current shape, color, bucket
+        self.c_shape, self.c_color, self.c_bucket, self.c_index  = -1,-1,-1,-1       # current shape, color, bucket
         self.move_list=[]
         self.last_boards = []
+        self.last_attributes = []
         self.last_moves = []
         self.prev_board = None
+        self.prev_attributes = None
         self.n_steps = args['N_STEPS']
         for i in range(self.n_steps):
             self.last_boards.append(None)
             self.last_moves.append(None)
+            self.last_attributes.append(None)
         self.error_count = 0
         
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -48,12 +51,13 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         self.sample_new_board()
         self.l_shape, self.l_color, self.l_bucket, self.l_index = -1,-1,-1,-1    # reset last successful shape, color, bucket
         self.c_shape, self.c_color, self.c_bucket, self.c_index = -1,-1,-1,-1    # reset current shape, color, bucket
-        #self.last_board = None
+        self.last_attributes = []
         self.last_boards = []
         self.last_moves = []
         for i in range(self.n_steps):
             self.last_boards.append(None)
             self.last_moves.append(None)
+            self.last_attributes.append(None)
         #breakpoint()
         return self.get_feature()
 
@@ -85,6 +89,7 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         
         # done : 'True' if the episode ends, response_code : response code of the move - accepted(0) etc.
         self.prev_board = self.board
+        self.prev_attributes = (o_shape,o_color)
         done, response_code, reward = self.take_action(action_row_index+1, action_col_index+1, bucket_row, bucket_col)          # cgs requires one-indexed board positions
         
         # if response code is 0(action is accepted), update the last successful step information
@@ -103,6 +108,8 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
             self.last_moves.append(action)
             self.last_boards.pop(0)
             self.last_boards.append(self.prev_board)
+            self.last_attributes.pop(0)
+            self.last_attributes.append(self.prev_attributes)
         else:
             self.move_list.append(action)
             self.error_count+=1
