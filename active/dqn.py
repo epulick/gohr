@@ -132,6 +132,7 @@ class DQN():
     def train(self):
         for episode in tqdm(range(self.n_episodes)):
             # Set initial variables for looping
+            self.debug = 0
             done = 0
             episode_reward = 0
             state_dict = self.env.reset()
@@ -245,9 +246,12 @@ class DQN():
         # Can only optimize if the buffer filled above the batch threshold
         if len(self.replay_memory) < self.batch_size:
             return
-
+        
+        #for i in range(4):
         # Get a batch
-        batch = self.replay_memory.sample(self.batch_size)
+        #breakpoint()
+        #batch = self.replay_memory.sample(self.batch_size)
+        batch =self.replay_memory.sample(self.batch_size)
         
         state, action, next_state, reward = map(torch.stack, zip(*batch))
 
@@ -299,11 +303,14 @@ class DQN():
         # --------------
         #print("td_target: ",td_target)
         #print("td_target.size(): ", td_target.size())
-
+        
         # Calculate the loss
         loss = self.loss(td_estimate,td_target)
-
+        if (ep%200)==0 and not(self.debug):
+            #breakpoint()
+            self.debug=1
         # Zero the gradient and calculate the gradient
+        #breakpoint()
         self.optimizer.zero_grad()
         loss.backward()
 
