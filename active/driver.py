@@ -48,7 +48,10 @@ def single_execution(args):
     agent = DQN(env,args)
     agent.train()
     error_count = agent.env.error_count
-    agent.env.close_channel()
+    env.close_channel()
+    if args["RECORD"]:
+        agent.run.stop()
+
     # print("--------------------")
     # print("--------------------")
     # print("Errors made in this trajectory: ", agent.env.error_count)
@@ -63,6 +66,8 @@ def single_execution(args):
     agent.all_data_df.to_csv(os.path.join(run_dir, 'move_data.csv'))
     agent.episode_df.to_csv(os.path.join(run_dir, 'episode_data.csv'))
     agent.loss_df.to_csv(os.path.join(run_dir, 'loss_data.csv'))
+    with open(run_dir+'/data.yaml', 'w') as outfile:
+        yaml.dump(args, outfile)
     return agent.env.error_count
 
 # Run a set of training trajectories for the learner (with the same parameters)
@@ -82,7 +87,8 @@ def run_experiment(args):
     if args['RECORD']:
         run = neptune.init_run(
             project="eric-pulick/gohr-test",
-            source_files=["dqn.py, driver.py, featurization.py, rule_game_engine.py, rule_game_env.py"]
+            source_files=["dqn.py, driver.py, featurization.py, rule_game_engine.py, rule_game_env.py"]#,
+            #mode="offline"
         )
         run_info = run.fetch()
         exp_id = run_info['sys']['id']
@@ -126,6 +132,8 @@ def run_experiment(args):
     # Close out the run as needed
     if args['RECORD']:
         run["params"]=args
+        run.sync()
+        run.wait()
         run.stop()
     return outputs
 

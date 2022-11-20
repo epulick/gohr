@@ -26,4 +26,4 @@ source "$h/scripts/set-var-captive.sh"
 #python3 experiment_driver.py "captive/game/game-data/rules" "params/tuning_runs/current/naive_n8_clockwiseTwoFree_8reps.yaml"
 
 # Use to run a set of rules
-python3 experiment_driver.py "captive/game/game-data/rules" "params/rule_runs/initial_run_n8.yaml"
+python3 experiment_driver.py "captive/game/game-data/rules" "params/rule_runs/initial_run_n2.yaml"

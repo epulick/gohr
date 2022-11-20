@@ -61,7 +61,7 @@ def rule_run(args, rule_dir_path):
                 "bottom_then_top.txt","bottomLeft_then_topRight.txt"]
     #rules_list = ["1_2_color_4m.txt","1_1_color_3m_cua.txt"]
     computation_batch = 8
-    repeats = 16
+    repeats = 56
     for rule in rules_list:
         args.update({"RULE_NAME":rule})
         args.update({"BATCH_SIZE":computation_batch})

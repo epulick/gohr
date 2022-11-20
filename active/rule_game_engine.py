@@ -68,6 +68,8 @@ class RuleGameEngine():
     def close_channel(self):
         self.cgs.stdin.write(b"EXIT\n")
         self.cgs.stdin.flush()
+        self.cgs.terminate()
+        self.cgs.wait()
 
     def read_data(self):
         # child's stdout is where python process will read data from 
