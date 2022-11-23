@@ -49,7 +49,7 @@ def single_execution(args):
     agent.train()
     error_count = agent.env.error_count
     env.close_channel()
-    if args["RECORD"]:
+    if args["RECORD"] and agent.run is not None:
         agent.run.stop()
 
     # print("--------------------")
@@ -87,8 +87,8 @@ def run_experiment(args):
     if args['RECORD']:
         run = neptune.init_run(
             project="eric-pulick/gohr-test",
-            source_files=["dqn.py, driver.py, featurization.py, rule_game_engine.py, rule_game_env.py"]#,
-            #mode="offline"
+            source_files=["dqn.py, driver.py, featurization.py, rule_game_engine.py, rule_game_env.py"],
+            mode="sync"
         )
         run_info = run.fetch()
         exp_id = run_info['sys']['id']

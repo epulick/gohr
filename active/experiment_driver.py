@@ -111,9 +111,10 @@ if __name__ == "__main__":
         output_dir = "outputs/rule_runs/"+yaml_name
         args.update({"OUTPUT_DIR":output_dir})
         #rule_run(args,rule_dir_path)
-        if (not os.path.exists(output_dir)):
-            rule_run(args,rule_dir_path)
-        else:
-            breakpoint()
+        #if (not os.path.exists(output_dir)):
+        #    rule_run(args,rule_dir_path)
+        #else:
+        #    breakpoint()
+        rule_run(args,rule_dir_path)   
     else:
         breakpoint()

@@ -69,7 +69,7 @@ class DQN():
         self.env = env
 
         # Open up the relevant experiment in Neptune if experiment set to record
-        if args['RECORD']:
+        if args['RECORD'] and False:
             run = neptune.init_run(
                 project="eric-pulick/gohr-test",
                 with_id=args['EXP_ID'],
