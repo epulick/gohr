@@ -17,14 +17,20 @@ def single_execution(args):
     # Gather relevant variables from args for this run
     run_id, exp_dir, exp_id = args['RUN_ID'], args['EXP_DIR'], args['EXP_ID']
     print("RUN : ",run_id)
-
+    #breakpoint()
     # Set the seeds for various aspects of the experiment (generated in the run_experiments function)
     if args['SEED'] == -1:
         args['SEED'] =  int(args["SEEDS1"][run_id])    
         torch.manual_seed(int(args["SEEDS2"][run_id]))     
         np.random.seed(int(args["SEEDS3"][run_id]))
         random.seed(int(args["SEEDS4"][run_id]))
-
+    # Debug run
+    elif args['SEED']==-2:
+        run_id = args["DEBUG_RUN"]
+        args['SEED'] =  int(args["SEEDS1"][run_id])    
+        torch.manual_seed(int(args["SEEDS2"][run_id]))     
+        np.random.seed(int(args["SEEDS3"][run_id]))
+        random.seed(int(args["SEEDS4"][run_id]))
     # Copied from Shubham/Yiding, this structure isn't currently used (10/30/22)
     else:
         seed = run_id + args['SEED']
@@ -69,6 +75,54 @@ def single_execution(args):
     with open(run_dir+'/data.yaml', 'w') as outfile:
         yaml.dump(args, outfile)
     return agent.env.error_count
+
+def debug_execution(args):
+    exp_id =  'debug'
+    run_id = 10000
+    # Create directory for export, update the args, make the folder if needed
+    exp_dir =  os.path.join(args['OUTPUT_DIR'], exp_id +"_"+ args['RULE_NAME'].split('/')[-1].split('.')[0])
+    args.update({'EXP_DIR' : exp_dir, 'EXP_ID' : exp_id,'SEED':-2,'RUN_ID':run_id})
+    if(not os.path.exists(exp_dir)):
+        os.makedirs(exp_dir)
+    single_execution(args)
+    return
+    # outputs = []
+    # if args["PARALLEL"] == True:
+    #     # Pull in the number of trials and the number of runs to do in parallel (batch size)
+    #     num_jobs, batch_size = args['REPEAT'], args['BATCH_SIZE']
+
+    #     # Work through all the jobs, knocking out up to <batch_size> at a time
+    #     for batch_id in range(int(num_jobs/batch_size)):
+    #         # Generate the list of trials
+    #         id_list = np.arange(batch_id*batch_size, (batch_id+1)*batch_size)
+    #         #print(id_list)
+    #         # Create a list of argument dictionaries to be used across the trials
+    #         args_list = []
+    #         # Loop over all the trials in this particular batch
+    #         for run_id in id_list:
+    #             nargs = copy.deepcopy(args)
+    #             nargs.update({'RUN_ID':run_id})
+    #             args_list.append(nargs)
+
+    #         # Parallelize the runs in this batch
+    #         output_list = Parallel(n_jobs=batch_size)(delayed(single_execution)(args) for args in args_list)
+    #         outputs.append(output_list)
+    # else:
+    #     id_list = np.arange(0,args['REPEAT'])
+    #     args_list = []
+    #     for run_id in id_list:
+    #         nargs = copy.deepcopy(args)
+    #         nargs.update({'RUN_ID':run_id})
+    #         output = single_execution(nargs)
+    #         outputs.append(output)
+
+    # # Close out the run as needed
+    # if args['RECORD']:
+    #     run["params"]=args
+    #     run.sync()
+    #     run.wait()
+    #     run.stop()
+    # return outputs
 
 # Run a set of training trajectories for the learner (with the same parameters)
 def run_experiment(args):
@@ -144,10 +198,14 @@ def test_driver(args):
         env = NaiveBoard(args)
     elif args['FEATURIZATION']=='NAIVE_N':
         env = NaiveBoard_N(args)
+    elif args['FEATURIZATION']=='NAIVE_N_DENSE':
+        env=NaiveBoard_N_dense(args)
     else:
         breakpoint()
     phi = env.get_feature()
-
+    if args["DEBUG"]==True:
+        debug_execution(args)
+        return
     # Test the DQN creation
     agent = DQN(env,args)
     #breakpoint()

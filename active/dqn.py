@@ -211,6 +211,8 @@ class DQN():
         # epsilon greedy policy - epsilon decays exponentially with time
         eps_threshold = self.eps_end + (self.eps_start-self.eps_end)*math.exp(-1*self.steps/self.eps_decay)
         broken = False
+        #if ep==250:
+        #    breakpoint()
         with torch.no_grad():
             debug_q = self.net(state)[valid]
         # Random exploration action
@@ -227,7 +229,7 @@ class DQN():
             with torch.no_grad():
                 #breakpoint()
                 q_val = self.net(state)
-                min_val = q_val.min(0)[0]
+                min_val = q_val.min(0)[0]-1
                 boolmask = torch.BoolTensor(mask)
                 masked_q = q_val.masked_fill(boolmask,min_val)
                 action = masked_q.max(0)[1].to(self.device)
@@ -269,7 +271,7 @@ class DQN():
         q = self.net(state)
         # TD-estimate is the Q values from the actions taken by the learner
         td_estimate = self.net(state).gather(1,action.to(torch.int64))
-
+       
         # --------------
         # DEBUGGING BLOCK
         # --------------

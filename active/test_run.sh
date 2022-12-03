@@ -17,7 +17,7 @@ source "$h/scripts/set-var-captive.sh"
 #python3 featurization.py "captive/game/game-data/rules"
 
 # Use to test the driver script (note the shift of the args to a parameter file)
-#python3 driver.py "captive/game/game-data/rules" "params/test_param.yaml"
+#python3 driver.py "captive/game/game-data/rules" "params/debug_param.yaml"
 
 # Use to run the driver script
 #python3 experiment_driver.py "captive/game/game-data/rules" "params/test_param.yaml"
@@ -26,4 +26,4 @@ source "$h/scripts/set-var-captive.sh"
 #python3 experiment_driver.py "captive/game/game-data/rules" "params/tuning_runs/current/naive_n8_clockwiseTwoFree_8reps.yaml"
 
 # Use to run a set of rules
-python3 experiment_driver.py "captive/game/game-data/rules" "params/rule_runs/initial_run_n8.yaml"
+python3 experiment_driver.py "captive/game/game-data/rules" "params/rule_runs/debug_initial_run_n6.yaml"
