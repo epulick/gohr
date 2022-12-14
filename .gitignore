@@ -140,3 +140,7 @@ outputs/
 # Ignore neptune file
 **neptune.py
 **.neptune
+
+#Ignore images
+.pdf
+.png
