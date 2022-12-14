@@ -142,5 +142,5 @@ outputs/
 **.neptune
 
 #Ignore images
-.pdf
-.png
+*.pdf
+*.png
