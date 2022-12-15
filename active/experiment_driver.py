@@ -56,9 +56,9 @@ def hyperparameter_tuning(args):
 def rule_run(args, rule_dir_path):
     rules_list = ["1_1_shape_4m.txt","1_2_shape_4m.txt", "1_1_shape_3m_cua.txt", 
                 "clockwiseZeroStart.txt","clockwiseTwoFree.txt","clockwiseTwoFreeAlt.txt",
-                "quadrantNearby.txt","quadrantNearbyTwoFree.txt"]#,
-                #"1_1_color_4m.txt","1_2_color_4m.txt","1_1_color_3m_cua.txt",
-                #"bottom_then_top.txt","bottomLeft_then_topRight.txt"]
+                "quadrantNearby.txt","quadrantNearbyTwoFree.txt",
+                "1_1_color_4m.txt","1_2_color_4m.txt","1_1_color_3m_cua.txt",
+                "bottom_then_top.txt","bottomLeft_then_topRight.txt"]
                 #"topLeft_then_bottomRight.txt","topRight_then_bottomLeft.txt"]
     #rules_list = ["1_2_color_4m.txt","1_1_color_3m_cua.txt"]
     computation_batch = 8
