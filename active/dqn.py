@@ -122,7 +122,7 @@ class DQN():
         self.episode_df = pd.DataFrame(columns=['episode','reward'])
 
         # Set up replay memory
-        self.transitions = namedtuple('Transition', ('state','action','next_state','reward'))
+        self.transitions = namedtuple('Transition', ('state','action','next_state','reward','done'))
         self.replay_memory = ReplayMemory(args['REPLAY_BUFFER_SIZE'], self.transitions)
 
     # Synchronize the policy net (net) and the target net (target_net)
@@ -174,9 +174,9 @@ class DQN():
                 self.all_data_df=pd.concat([self.all_data_df, current_df],ignore_index=True)
                 
                 # Append this step to the replay buffer
-                action, reward = torch.IntTensor([action]).to(self.device), torch.FloatTensor([reward]).to(self.device)
+                action, reward, done = torch.IntTensor([action]).to(self.device), torch.FloatTensor([reward]).to(self.device), torch.FloatTensor([done])
                 #action, reward = torch.IntTensor([action]), torch.FloatTensor([reward])
-                self.replay_memory.push(state, action, next_state, reward)
+                self.replay_memory.push(state, action, next_state, reward, done)
 
                 # TO DO - double check on behavior at end of episode
                 state=next_state
@@ -255,7 +255,7 @@ class DQN():
         #batch = self.replay_memory.sample(self.batch_size)
         batch =self.replay_memory.sample(self.batch_size)
         
-        state, action, next_state, reward = map(torch.stack, zip(*batch))
+        state, action, next_state, reward, done = map(torch.stack, zip(*batch))
 
         # --------------
         # DEBUGGING BLOCK
@@ -298,8 +298,8 @@ class DQN():
             target_net_q = target_next_q.gather(1,net_action)
         
         # TO-DO modify this to consider end-of-episode behavior correctly (1-done?)
-        td_target = (reward + self.gamma *target_net_q).float()
-        
+        td_target = (reward + (1-done)*self.gamma *target_net_q).float()
+        #breakpoint()
         # --------------
         # DEBUGGING BLOCK
         # --------------
