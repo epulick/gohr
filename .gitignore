@@ -144,3 +144,6 @@ outputs/
 #Ignore images
 *.pdf
 *.png
+
+# Ignore misc mlc outputs
+misc/mlc_proc_output/
