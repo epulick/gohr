@@ -196,10 +196,10 @@ def test_driver(args):
     # Test the environment using the yaml input
     if args['FEATURIZATION']=='NAIVE_BOARD':
         env = NaiveBoard(args)
-    elif args['FEATURIZATION']=='NAIVE_N':
-        env = NaiveBoard_N(args)
-    elif args['FEATURIZATION']=='NAIVE_N_DENSE':
-        env=NaiveBoard_N_dense(args)
+    elif args['FEATURIZATION']=='NAIVE_N_BS_AS':
+        env = Naive_N_Board_Sparse_Action_Sparse(args)
+    elif args['FEATURIZATION']=='NAIVE_N_BD_AD':
+        env= Naive_N_Board_Dense_Action_Dense(args)
     else:
         breakpoint()
     phi = env.get_feature()

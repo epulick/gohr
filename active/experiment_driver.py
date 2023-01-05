@@ -1,5 +1,5 @@
 import numpy as np
-import gym, os, sys, yaml, random, torch, copy, optuna
+import gym, os, sys, yaml, random, torch, copy
 from rule_game_engine import *
 from rule_game_env import *
 from rule_sets import *
@@ -31,6 +31,7 @@ def objective(trial, args):
     return np.median(results)
 
 def hyperparameter_tuning(args):
+    import optuna
     study_name = args["YAML_NAME"]
     storage_name = "sqlite:///{}{}.db".format(args["OUTPUT_DIR"]+"/",study_name)
     study = optuna.create_study(study_name=study_name,storage=storage_name,direction = "minimize",load_if_exists=True)

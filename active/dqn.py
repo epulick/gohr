@@ -7,12 +7,10 @@ import random, math
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import matplotlib.pyplot as plt
+#import torch.nn.functional as F
+#import torch.optim as optim
 import neptune.new as neptune
 from neptune.new.types import File
-from torch.distributions import Categorical
 from tqdm import tqdm
 from collections import namedtuple, deque
 
