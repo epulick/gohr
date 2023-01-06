@@ -1,5 +1,6 @@
 # Starting point
-FROM ubuntu:jammy
+# FROM ubuntu:jammy (way smaller for some reason?)
+FROM amd64/ubuntu:jammy
 
 # Get python installation ready
 RUN apt-get update

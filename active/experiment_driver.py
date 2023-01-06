@@ -72,6 +72,24 @@ def rule_run(args, rule_dir_path):
         args.update({'RULE_FILE_PATH' : rule_file_path})
         run_experiment(args)
 
+def cluster_rule_run(args, rule_dir_path):
+    rules_list = ["1_1_shape_4m.txt","1_2_shape_4m.txt", "1_1_shape_3m_cua.txt", 
+                "clockwiseZeroStart.txt","clockwiseTwoFree.txt","clockwiseTwoFreeAlt.txt",
+                "quadrantNearby.txt","quadrantNearbyTwoFree.txt",
+                "1_1_color_4m.txt","1_2_color_4m.txt","1_1_color_3m_cua.txt",
+                "bottom_then_top.txt","bottomLeft_then_topRight.txt"]
+                #"topLeft_then_bottomRight.txt","topRight_then_bottomLeft.txt"]
+    #rules_list = ["1_2_color_4m.txt","1_1_color_3m_cua.txt"]
+    computation_batch = 8
+    repeats = 56
+    for rule in rules_list:
+        args.update({"RULE_NAME":rule})
+        args.update({"BATCH_SIZE":computation_batch})
+        args.update({"REPEAT":repeats})
+        rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
+        args.update({'RULE_FILE_PATH' : rule_file_path})
+        run_experiment(args)
+
 if __name__ == "__main__":
     rule_dir_path = sys.argv[1]
     yaml_path = sys.argv[2]
@@ -117,6 +135,6 @@ if __name__ == "__main__":
         #    rule_run(args,rule_dir_path)
         #else:
         #    breakpoint()
-        rule_run(args,rule_dir_path)   
+        rule_run(args,rule_dir_path)
     else:
         breakpoint()
