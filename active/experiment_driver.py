@@ -55,15 +55,15 @@ def hyperparameter_tuning(args):
         print("    {}: {}".format(key, value))
     
 def rule_run(args, rule_dir_path):
-    rules_list = ["1_1_shape_4m.txt","1_2_shape_4m.txt", "1_1_shape_3m_cua.txt", 
-                "clockwiseZeroStart.txt","clockwiseTwoFree.txt","clockwiseTwoFreeAlt.txt",
-                "quadrantNearby.txt","quadrantNearbyTwoFree.txt",
-                "1_1_color_4m.txt","1_2_color_4m.txt","1_1_color_3m_cua.txt",
-                "bottom_then_top.txt","bottomLeft_then_topRight.txt"]
+    #rules_list = ["1_1_shape_4m.txt","1_2_shape_4m.txt", "1_1_shape_3m_cua.txt", 
+    #            "clockwiseZeroStart.txt","clockwiseTwoFree.txt","clockwiseTwoFreeAlt.txt",
+    #            "quadrantNearby.txt","quadrantNearbyTwoFree.txt",
+    #            "1_1_color_4m.txt","1_2_color_4m.txt","1_1_color_3m_cua.txt",
+    #            "bottom_then_top.txt","bottomLeft_then_topRight.txt"]
                 #"topLeft_then_bottomRight.txt","topRight_then_bottomLeft.txt"]
-    #rules_list = ["1_2_color_4m.txt","1_1_color_3m_cua.txt"]
+    rules_list = ["1_2_color_4m.txt"]
     computation_batch = 8
-    repeats = 56
+    repeats = 16
     for rule in rules_list:
         args.update({"RULE_NAME":rule})
         args.update({"BATCH_SIZE":computation_batch})
@@ -73,15 +73,15 @@ def rule_run(args, rule_dir_path):
         run_experiment(args)
 
 def cluster_rule_run(args, rule_dir_path):
-    rules_list = ["1_1_shape_4m.txt","1_2_shape_4m.txt", "1_1_shape_3m_cua.txt", 
-                "clockwiseZeroStart.txt","clockwiseTwoFree.txt","clockwiseTwoFreeAlt.txt",
-                "quadrantNearby.txt","quadrantNearbyTwoFree.txt",
-                "1_1_color_4m.txt","1_2_color_4m.txt","1_1_color_3m_cua.txt",
-                "bottom_then_top.txt","bottomLeft_then_topRight.txt"]
+    #rules_list = ["1_1_shape_4m.txt","1_2_shape_4m.txt", "1_1_shape_3m_cua.txt", 
+                #"clockwiseZeroStart.txt","clockwiseTwoFree.txt","clockwiseTwoFreeAlt.txt",
+                #"quadrantNearby.txt","quadrantNearbyTwoFree.txt",
+                #"1_1_color_4m.txt","1_2_color_4m.txt","1_1_color_3m_cua.txt",
+                #"bottom_then_top.txt","bottomLeft_then_topRight.txt"]
                 #"topLeft_then_bottomRight.txt","topRight_then_bottomLeft.txt"]
-    #rules_list = ["1_2_color_4m.txt","1_1_color_3m_cua.txt"]
+    rules_list = ["1_2_color_4m.txt","1_1_color_3m_cua.txt"]
     computation_batch = 8
-    repeats = 56
+    repeats = 16
     for rule in rules_list:
         args.update({"RULE_NAME":rule})
         args.update({"BATCH_SIZE":computation_batch})

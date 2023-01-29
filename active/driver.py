@@ -2,8 +2,7 @@
 
 import numpy as np
 import neptune.new as neptune
-import gym, os, sys, yaml, random, torch, copy
-from gym import spaces
+import os, sys, yaml, random, torch, copy
 from joblib import Parallel, delayed
 from math import ceil
 from rule_game_engine import *
@@ -19,11 +18,15 @@ def single_execution(args):
     print("RUN : ",run_id)
     #breakpoint()
     # Set the seeds for various aspects of the experiment (generated in the run_experiments function)
+    seed1 = int(args["SEEDS1"][run_id])
+    seed2 = int(args["SEEDS2"][run_id])
+    seed3 = int(args["SEEDS3"][run_id])
+    seed4 = int(args["SEEDS4"][run_id])
     if args['SEED'] == -1:
-        args['SEED'] =  int(args["SEEDS1"][run_id])    
-        torch.manual_seed(int(args["SEEDS2"][run_id]))     
-        np.random.seed(int(args["SEEDS3"][run_id]))
-        random.seed(int(args["SEEDS4"][run_id]))
+        args['SEED'] =  seed1   
+        torch.manual_seed(seed2)     
+        np.random.seed(seed3)
+        random.seed(seed4)
     # Debug run
     elif args['SEED']==-2:
         run_id = args["DEBUG_RUN"]
@@ -47,6 +50,12 @@ def single_execution(args):
         env = Naive_N_Board_Sparse_Action_Sparse(args)
     elif args['FEATURIZATION']=='NAIVE_N_BD_AD':
         env= Naive_N_Board_Dense_Action_Dense(args)
+    elif args['FEATURIZATION']=='NAIVE_N_BD_AS':
+        env= Naive_N_Board_Dense_Action_Sparse(args)
+    elif args['FEATURIZATION']=='NAIVE_N_BS_AD':
+        env= Naive_N_Board_Sparse_Action_Dense(args)
+    elif args['FEATURIZATION']=='NAIVE_N_BSD_ASD':
+        env= Naive_N_Board_SparseDense_Action_SparseDense(args)
     else:
         breakpoint()
 
@@ -69,9 +78,14 @@ def single_execution(args):
     if (not os.path.exists(run_dir)):
         os.makedirs(run_dir)
     # Write data out
-    agent.all_data_df.to_csv(os.path.join(run_dir, 'move_data.csv'))
-    agent.episode_df.to_csv(os.path.join(run_dir, 'episode_data.csv'))
-    agent.loss_df.to_csv(os.path.join(run_dir, 'loss_data.csv'))
+    if args["RUN_TYPE"]=='cluster':
+        agent.all_data_df['cluster_id']=args['CLUSTER_ID']+'_'+str(run_id)
+        agent.episode_df['cluster_id']=args['CLUSTER_ID']+'_'+str(run_id)
+        #agent.loss_df['cluster_id']=args['CLUSTER_ID']+'_'+str(run_id)
+    agent.all_data_df.to_csv(os.path.join(run_dir, 'move_data.csv'),index=False)
+    agent.episode_df.to_csv(os.path.join(run_dir, 'episode_data.csv'),index=False)
+    #agent.loss_df.to_csv(os.path.join(run_dir, 'loss_data.csv'),index=False)
+    args.update({'RUN_ID':run_id.item(),"SEEDS1":seed1,"SEEDS2":seed2,"SEEDS3":seed3,"SEEDS4":seed4})
     with open(run_dir+'/data.yaml', 'w') as outfile:
         yaml.dump(args, outfile)
     return agent.env.error_count
@@ -137,15 +151,18 @@ def run_experiment(args):
         args.update({"SEEDS1": seeds1, "SEEDS2": seeds2, "SEEDS3": seeds3, "SEEDS4": seeds4})
 
     # Set up the experiment id (more detailed if recording to Neptune)
-    exp_id =  'other'
-    if args['RECORD']:
-        run = neptune.init_run(
-            project="eric-pulick/gohr-test",
-            source_files=["dqn.py, driver.py, featurization.py, rule_game_engine.py, rule_game_env.py"],
-            mode="sync"
-        )
-        run_info = run.fetch()
-        exp_id = run_info['sys']['id']
+    if args["RUN_TYPE"]=='cluster':
+        exp_id=args["CLUSTER_ID"]
+    else:
+        exp_id =  'other'
+        if args['RECORD']:
+            run = neptune.init_run(
+                project="eric-pulick/gohr-test",
+                source_files=["dqn.py, driver.py, featurization.py, rule_game_engine.py, rule_game_env.py"],
+                mode="async"
+            )
+            run_info = run.fetch()
+            exp_id = run_info['sys']['id']
 
     # Create directory for export, update the args, make the folder if needed
     exp_dir =  os.path.join(args['OUTPUT_DIR'], exp_id +"_"+ args['RULE_NAME'].split('/')[-1].split('.')[0])
@@ -185,9 +202,11 @@ def run_experiment(args):
 
     # Close out the run as needed
     if args['RECORD']:
-        run["params"]=args
-        run.sync()
-        run.wait()
+        # Pending change to neptune
+        #run["params"]=stringify_unsupported(args)
+        run["params"]=args 
+        #run.sync()
+        #run.wait()
         run.stop()
     return outputs
 

@@ -1,15 +1,26 @@
-import os, sys, yaml
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+import sys, yaml
 from rule_game_engine import *
 from rule_game_env import *
 from featurization import *
 from driver import *
 
 if __name__ == "__main__":
+    if(not os.path.exists("outputs")):
+        os.mkdir("outputs")
     rule_dir_path = "/work/active/captive/game/game-data/rules"
     #yaml_path = sys.argv[1]
-    yaml_path = "/work/active/params/test_cluster_param.yaml"
-    rule_name = '1_1_shape_4m.txt'
-    repeats = 1
+    #yaml_path = "/work/active/params/test_cluster_param.yaml"
+    yaml_dir= "/work/active/params/"
+    #rule_name = '1_1_shape_4m.txt'
+    rule_name = str(sys.argv[1])+'.txt'
+    yaml_config=str(sys.argv[2])
+    cluster_job = str(sys.argv[3])
+    cluster_process = str(sys.argv[4])
+    cluster_id =cluster_job+"_"+cluster_process
+    yaml_path=yaml_dir+yaml_config
+    repeats = 5
 
     loader = yaml.SafeLoader
     loader.add_implicit_resolver(
@@ -25,16 +36,22 @@ if __name__ == "__main__":
 
     with open(yaml_path, 'r') as param_file:
         args = yaml.load(param_file, Loader = yaml.SafeLoader)
-
+    args.update({"RUN_TYPE":"cluster"})
+    args.update({"PARALLEL":False})
+    args.update({"TRAIN_EPISODES":2000})
+    #args.update({"VERBOSE":1})
     if args['RUN_TYPE']=='cluster':
         yaml_name = yaml_path.split("/")[-1].split('.')[0]
         args.update({"YAML_NAME":yaml_name})
-        output_dir = "outputs/rule_runs/"+yaml_name
+        output_dir = "outputs/"+yaml_name
         args.update({"OUTPUT_DIR":output_dir})
         args.update({"RULE_NAME":rule_name})
         args.update({"REPEAT":repeats})
+        args.update({"RECORD":0})
+        args.update({"CLUSTER_ID":cluster_id})
         rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
         args.update({'RULE_FILE_PATH' : rule_file_path})
+        #print(args)
         run_experiment(args)
     else:
         breakpoint()

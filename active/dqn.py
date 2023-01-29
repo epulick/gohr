@@ -88,6 +88,10 @@ class DQN():
         self.sync = args ['TARGET_UPDATE_FREQ']
         self.reward_map = args['REWARD_MAPPING']
         self.steps = 0
+        if args["RUN_TYPE"]=='cluster':
+            self.tqdm=False
+        else:
+            self.tqdm=True
 
         # Build the neural network (net and target_net)
         self.in_dim, self.out_dim = self.env.in_dim, self.env.out_dim
@@ -115,7 +119,7 @@ class DQN():
         # Set up dataframe for recording the results
         # to do - consider adding return code (some pieces are more informative than others)
         #self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon','board','valid','debug_q','zero_ind_action_tuple', 'other'])
-        self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon', 'board', 'other'])
+        self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon', 'board'])
         self.loss_df = pd.DataFrame(columns= ['loss'])
         self.episode_df = pd.DataFrame(columns=['episode','reward'])
 
@@ -128,7 +132,7 @@ class DQN():
         self.target_net.load_state_dict(self.net.state_dict())
 
     def train(self):
-        for episode in tqdm(range(self.n_episodes)):
+        for episode in tqdm(range(self.n_episodes)) if self.tqdm else range(self.n_episodes):
             # Set initial variables for looping
             self.debug = 0
             done = 0
@@ -167,7 +171,11 @@ class DQN():
                 #breakpoint()
                 #current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':action_type, 'action':int(action), 'reward':int(reward), 'done':done, 'epsilon':eps,'board':[self.env.board],'valid':[valid],'debug_q':[debug_q], 'zero_ind_action_tuple':[self.env.action_index_to_tuple(action)], 'other':'none'},index=[0])
                 #breakpoint()
-                current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':action_type, 'action':int(action), 'reward':int(reward), 'done':done, 'epsilon':eps,'board':[self.env.board], 'other':'none'},index=[0])
+                if action_type=="random":
+                    log_action = "r"
+                else:
+                    log_action = "g"
+                current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':log_action, 'action':int(action), 'reward':int(reward), 'done':done, 'epsilon':"{0:.4f}".format(eps),'board':[self.env.board]},index=[0])
                 #breakpoint()
                 self.all_data_df=pd.concat([self.all_data_df, current_df],ignore_index=True)
                 

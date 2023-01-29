@@ -58,6 +58,8 @@ class RuleGameEngine():
     def open_channel(self, args):
         if(args['RUN_MODE']=='RULE'):
             # Spawn a CGS as a child process
+            print("Opening a CGS subprocess:")
+            #print(args)
             self.cgs = subprocess.Popen(['java', '-Dseed='+str(self.seed), '-Doutput=STANDARD', 'edu.wisc.game.engine.Captive', self.rule_file_path, str(self.initial_object_count)], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         else:
             rp = args['RULE_PARAM']
@@ -77,7 +79,12 @@ class RuleGameEngine():
         jsonLine = readLine(self.cgs.stdout, self.verbose).strip()
 
         #print(statusLine)
+        #print(jsonLine)
         [self.response_code, self.status, self.move_count] = map( int, re.split("\s+", statusLine))
+        # try:
+        #     [self.response_code, self.status, self.move_count] = map( int, re.split("\s+", statusLine))
+        # except:
+        #     raise Exception("Problem reading line: {}, next is :{}".format(statusLine,readLine(self.cgs.stdout,self.verbose).strip()))
         self.board = (json.loads(jsonLine))["value"]
 
         if(self.verbose>=1):
