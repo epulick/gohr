@@ -56,6 +56,8 @@ def single_execution(args):
         env= Naive_N_Board_Sparse_Action_Dense(args)
     elif args['FEATURIZATION']=='NAIVE_N_BSD_ASD':
         env= Naive_N_Board_SparseDense_Action_SparseDense(args)
+    elif args['FEATURIZATION']=='NAIVE_N_BDa_AS':
+        env=Naive_N_Board_Dense_alt_Action_Sparse(args)
     else:
         breakpoint()
 
