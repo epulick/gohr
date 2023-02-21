@@ -55,33 +55,10 @@ def hyperparameter_tuning(args):
         print("    {}: {}".format(key, value))
     
 def rule_run(args, rule_dir_path):
-    #rules_list = ["1_1_shape_4m.txt","1_2_shape_4m.txt", "1_1_shape_3m_cua.txt", 
-    #            "clockwiseZeroStart.txt","clockwiseTwoFree.txt","clockwiseTwoFreeAlt.txt",
-    #            "quadrantNearby.txt","quadrantNearbyTwoFree.txt",
-    #            "1_1_color_4m.txt","1_2_color_4m.txt","1_1_color_3m_cua.txt",
-    #            "bottom_then_top.txt","bottomLeft_then_topRight.txt"]
-                #"topLeft_then_bottomRight.txt","topRight_then_bottomLeft.txt"]
+    # Add to rules list as desired
     rules_list = ["1_2_color_4m.txt"]
-    computation_batch = 8
-    repeats = 16
-    for rule in rules_list:
-        args.update({"RULE_NAME":rule})
-        args.update({"BATCH_SIZE":computation_batch})
-        args.update({"REPEAT":repeats})
-        rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
-        args.update({'RULE_FILE_PATH' : rule_file_path})
-        run_experiment(args)
-
-def cluster_rule_run(args, rule_dir_path):
-    #rules_list = ["1_1_shape_4m.txt","1_2_shape_4m.txt", "1_1_shape_3m_cua.txt", 
-                #"clockwiseZeroStart.txt","clockwiseTwoFree.txt","clockwiseTwoFreeAlt.txt",
-                #"quadrantNearby.txt","quadrantNearbyTwoFree.txt",
-                #"1_1_color_4m.txt","1_2_color_4m.txt","1_1_color_3m_cua.txt",
-                #"bottom_then_top.txt","bottomLeft_then_topRight.txt"]
-                #"topLeft_then_bottomRight.txt","topRight_then_bottomLeft.txt"]
-    rules_list = ["1_2_color_4m.txt","1_1_color_3m_cua.txt"]
-    computation_batch = 8
-    repeats = 16
+    computation_batch = 1
+    repeats = 8
     for rule in rules_list:
         args.update({"RULE_NAME":rule})
         args.update({"BATCH_SIZE":computation_batch})
@@ -114,27 +91,24 @@ if __name__ == "__main__":
 
     with open(yaml_path, 'r') as param_file:
         args = yaml.load(param_file, Loader = yaml.SafeLoader)
-
+    # For local testing
     if args['RUN_TYPE']=='normal':
         rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
         args.update({'RULE_FILE_PATH' : rule_file_path})
         run_experiment(args)
+    # For hyperparameter tuning runs
     elif args['RUN_TYPE']=='tune':
         rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
         args.update({'RULE_FILE_PATH' : rule_file_path})
         yaml_name = yaml_path.split("/")[-1].split('.')[0]
         args.update({"YAML_NAME":yaml_name})
         hyperparameter_tuning(args)
+    # For batch local runs (largely deprecated now with CHTC functionality)
     elif args['RUN_TYPE']=='rule_run':
         yaml_name = yaml_path.split("/")[-1].split('.')[0]
         args.update({"YAML_NAME":yaml_name})
         output_dir = "outputs/rule_runs/"+yaml_name
         args.update({"OUTPUT_DIR":output_dir})
-        #rule_run(args,rule_dir_path)
-        #if (not os.path.exists(output_dir)):
-        #    rule_run(args,rule_dir_path)
-        #else:
-        #    breakpoint()
         rule_run(args,rule_dir_path)
     else:
         breakpoint()
