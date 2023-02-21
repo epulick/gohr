@@ -102,43 +102,6 @@ def debug_execution(args):
         os.makedirs(exp_dir)
     single_execution(args)
     return
-    # outputs = []
-    # if args["PARALLEL"] == True:
-    #     # Pull in the number of trials and the number of runs to do in parallel (batch size)
-    #     num_jobs, batch_size = args['REPEAT'], args['BATCH_SIZE']
-
-    #     # Work through all the jobs, knocking out up to <batch_size> at a time
-    #     for batch_id in range(int(num_jobs/batch_size)):
-    #         # Generate the list of trials
-    #         id_list = np.arange(batch_id*batch_size, (batch_id+1)*batch_size)
-    #         #print(id_list)
-    #         # Create a list of argument dictionaries to be used across the trials
-    #         args_list = []
-    #         # Loop over all the trials in this particular batch
-    #         for run_id in id_list:
-    #             nargs = copy.deepcopy(args)
-    #             nargs.update({'RUN_ID':run_id})
-    #             args_list.append(nargs)
-
-    #         # Parallelize the runs in this batch
-    #         output_list = Parallel(n_jobs=batch_size)(delayed(single_execution)(args) for args in args_list)
-    #         outputs.append(output_list)
-    # else:
-    #     id_list = np.arange(0,args['REPEAT'])
-    #     args_list = []
-    #     for run_id in id_list:
-    #         nargs = copy.deepcopy(args)
-    #         nargs.update({'RUN_ID':run_id})
-    #         output = single_execution(nargs)
-    #         outputs.append(output)
-
-    # # Close out the run as needed
-    # if args['RECORD']:
-    #     run["params"]=args
-    #     run.sync()
-    #     run.wait()
-    #     run.stop()
-    # return outputs
 
 # Run a set of training trajectories for the learner (with the same parameters)
 def run_experiment(args):

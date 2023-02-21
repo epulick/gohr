@@ -13,7 +13,6 @@ if __name__ == "__main__":
     #yaml_path = sys.argv[1]
     #yaml_path = "/work/active/params/test_cluster_param.yaml"
     yaml_dir= "/work/active/params/"
-    #rule_name = '1_1_shape_4m.txt'
     rule_name = str(sys.argv[1])+'.txt'
     yaml_config=str(sys.argv[2])
     cluster_job = str(sys.argv[3])

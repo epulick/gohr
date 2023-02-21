@@ -21,7 +21,6 @@ verbose = 0
 class QNet(nn.Module):
     def __init__(self, in_dim, out_dim, hidden_sizes, act):
         super().__init__()
-        # TO-DO - Make the activation function configurable
         if act == "ReLU":
             activation = nn.ReLU
         elif act == "LeakyReLU":
@@ -67,7 +66,7 @@ class DQN():
         self.env = env
 
         # Open up the relevant experiment in Neptune if experiment set to record
-        if args['RECORD'] and False:
+        if args['RECORD']:
             run = neptune.init_run(
                 project="eric-pulick/gohr-test",
                 with_id=args['EXP_ID'],
@@ -77,7 +76,8 @@ class DQN():
             )
             self.run = run
             self.run_id = args["RUN_ID"]
-        else: self.run = None
+        else: 
+            self.run = None
         
         # Misc. parameter import
         self.eps_start, self.eps_end, self.eps_decay = args["EPS_START"], args['EPS_END'], args['EPS_DECAY']
@@ -216,9 +216,6 @@ class DQN():
     def select_action(self,state,mask,valid,ep,t):
         # epsilon greedy policy - epsilon decays exponentially with time
         eps_threshold = self.eps_end + (self.eps_start-self.eps_end)*math.exp(-1*self.steps/self.eps_decay)
-        broken = False
-        #if ep==250:
-        #    breakpoint()
         with torch.no_grad():
             debug_q = self.net(state)[valid]
         # Random exploration action
@@ -255,10 +252,6 @@ class DQN():
         if len(self.replay_memory) < self.batch_size:
             return
         
-        #for i in range(4):
-        # Get a batch
-        #breakpoint()
-        #batch = self.replay_memory.sample(self.batch_size)
         batch =self.replay_memory.sample(self.batch_size)
         
         state, action, next_state, reward, done = map(torch.stack, zip(*batch))
@@ -303,9 +296,8 @@ class DQN():
             # Evaluate the action based on the offline network
             target_net_q = target_next_q.gather(1,net_action)
         
-        # TO-DO modify this to consider end-of-episode behavior correctly (1-done?)
         td_target = (reward + (1-done)*self.gamma *target_net_q).float()
-        #breakpoint()
+
         # --------------
         # DEBUGGING BLOCK
         # --------------
@@ -317,13 +309,11 @@ class DQN():
         if (ep%200)==0 and not(self.debug):
             #breakpoint()
             self.debug=1
+
         # Zero the gradient and calculate the gradient
-        #breakpoint()
         self.optimizer.zero_grad()
         loss.backward()
 
-        # TO-DO
-        # Consider clamping gradients
         if self.clamp:
             for param in self.net.parameters():
                 param.grad.data.clamp_(-1,1)
