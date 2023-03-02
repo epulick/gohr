@@ -15,7 +15,8 @@ RUN . /usr/ve/bin/activate && pip install -r py_packages.txt --extra-index-url h
 # Install Java
 RUN apt-get update
 RUN apt-get install default-jre -y
+RUN apt-get install git -y
 RUN apt-get clean
 
 # Copy necessary files
-COPY . /work
+COPY active/captive /captive
