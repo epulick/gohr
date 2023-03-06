@@ -9,10 +9,10 @@ from driver import *
 if __name__ == "__main__":
     if(not os.path.exists("outputs")):
         os.mkdir("outputs")
-    rule_dir_path = "/work/active/captive/game/game-data/rules"
+    rule_dir_path = "gohr/active/captive/game/game-data/rules"
     #yaml_path = sys.argv[1]
     #yaml_path = "/work/active/params/test_cluster_param.yaml"
-    yaml_dir= "/work/active/params/"
+    yaml_dir= "gohr/active/params/"
     rule_name = str(sys.argv[1])+'.txt'
     yaml_config=str(sys.argv[2])
     cluster_job = str(sys.argv[3])
