@@ -2,7 +2,7 @@
 
 import numpy as np
 import neptune.new as neptune
-import os, sys, yaml, random, torch, copy
+import os, sys, yaml, random, torch, copy, shutil
 from joblib import Parallel, delayed
 from math import ceil
 from rule_game_engine import *
@@ -84,12 +84,16 @@ def single_execution(args):
         agent.all_data_df['cluster_id']=args['CLUSTER_ID']+'_'+str(run_id)
         agent.episode_df['cluster_id']=args['CLUSTER_ID']+'_'+str(run_id)
         #agent.loss_df['cluster_id']=args['CLUSTER_ID']+'_'+str(run_id)
-    agent.all_data_df.to_csv(os.path.join(run_dir, 'move_data.csv'),index=False)
+    agent.all_data_df.to_csv(os.path.join(run_dir, 'move_data.gz'),index=False,compression='gzip')
     agent.episode_df.to_csv(os.path.join(run_dir, 'episode_data.csv'),index=False)
     #agent.loss_df.to_csv(os.path.join(run_dir, 'loss_data.csv'),index=False)
     args.update({'RUN_ID':run_id.item(),"SEEDS1":seed1,"SEEDS2":seed2,"SEEDS3":seed3,"SEEDS4":seed4})
     with open(run_dir+'/data.yaml', 'w') as outfile:
         yaml.dump(args, outfile)
+    #print(run_dir)
+    # Zip up folder and delete raw move csv
+    #shutil.make_archive(os.path.join(run_dir,'move_data'),"zip",root_dir=run_dir,base_dir='move_data.csv')
+    #os.remove(os.path.join(run_dir, 'move_data.csv'))
     return agent.env.error_count
 
 def debug_execution(args):
