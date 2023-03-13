@@ -2,7 +2,7 @@
 
 import numpy as np
 import neptune.new as neptune
-import os, sys, yaml, random, torch, copy, shutil
+import os, sys, yaml, random, torch, copy, shutil,gzip
 from joblib import Parallel, delayed
 from math import ceil
 from rule_game_engine import *
@@ -61,8 +61,25 @@ def single_execution(args):
     else:
         breakpoint()
 
+    # Create the output directory for generated files
+    run_dir = os.path.join(exp_dir, str(run_id))
+    if (not os.path.exists(run_dir)):
+        os.makedirs(run_dir)
+
+    move_path = os.path.join(run_dir, 'move_data.csv')
+    ep_path = os.path.join(run_dir, 'episode_data.csv')
+
+    if args["RUN_TYPE"]=='cluster':
+        with open(move_path,'w') as fp:
+            fp.write(args['CLUSTER_ID']+'_'+str(run_id)+'\n')
+            #fp.write(str(run_id)+'\n')
+        with open(ep_path,'w') as fp:
+            fp.write(args['CLUSTER_ID']+'_'+str(run_id)+'\n')
+            #fp.write(str(run_id)+'\n')
+    
+    log_paths = [move_path,ep_path]
     # Create the agent and train it
-    agent = DQN(env,args)
+    agent = DQN(env,args,log_paths)
     agent.train()
     error_count = agent.env.error_count
     env.close_channel()
@@ -75,25 +92,24 @@ def single_execution(args):
     # print("--------------------")
     # print("--------------------")
 
-    # Create the output directory for generated files
-    run_dir = os.path.join(exp_dir, str(run_id))
-    if (not os.path.exists(run_dir)):
-        os.makedirs(run_dir)
     # Write data out
     if args["RUN_TYPE"]=='cluster':
         agent.all_data_df['cluster_id']=args['CLUSTER_ID']+'_'+str(run_id)
         agent.episode_df['cluster_id']=args['CLUSTER_ID']+'_'+str(run_id)
         #agent.loss_df['cluster_id']=args['CLUSTER_ID']+'_'+str(run_id)
-    agent.all_data_df.to_csv(os.path.join(run_dir, 'move_data.gz'),index=False,compression='gzip')
-    agent.episode_df.to_csv(os.path.join(run_dir, 'episode_data.csv'),index=False)
+    #agent.all_data_df.to_csv(os.path.join(run_dir, 'move_data.gz'),index=False,compression='gzip')
+    #agent.episode_df.to_csv(os.path.join(run_dir, 'episode_data.csv'),index=False)
     #agent.loss_df.to_csv(os.path.join(run_dir, 'loss_data.csv'),index=False)
     args.update({'RUN_ID':run_id.item(),"SEEDS1":seed1,"SEEDS2":seed2,"SEEDS3":seed3,"SEEDS4":seed4})
     with open(run_dir+'/data.yaml', 'w') as outfile:
         yaml.dump(args, outfile)
     #print(run_dir)
     # Zip up folder and delete raw move csv
-    #shutil.make_archive(os.path.join(run_dir,'move_data'),"zip",root_dir=run_dir,base_dir='move_data.csv')
-    #os.remove(os.path.join(run_dir, 'move_data.csv'))
+    #shutil.make_archive(os.path.join(run_dir,'move_data'),"gzip",root_dir=run_dir,base_dir='move_data.csv')
+    with open(move_path,'rb') as f_in:
+        with gzip.open(os.path.join(run_dir, 'move_data.gz'), 'wb') as f_out:
+            shutil.copyfileobj(f_in,f_out)
+    os.remove(move_path)
     return agent.env.error_count
 
 def debug_execution(args):

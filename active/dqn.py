@@ -58,7 +58,7 @@ class ReplayMemory(object):
         return len(self.memory)
 
 class DQN():
-    def __init__(self,env,args):
+    def __init__(self,env,args,log_paths):
         # Put onto correct hardware
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -88,6 +88,7 @@ class DQN():
         self.sync = args ['TARGET_UPDATE_FREQ']
         self.reward_map = args['REWARD_MAPPING']
         self.steps = 0
+        self.move_path,self.ep_path = log_paths[0],log_paths[1]
         if args["RUN_TYPE"]=='cluster':
             self.tqdm=False
         else:
@@ -120,8 +121,10 @@ class DQN():
         # to do - consider adding return code (some pieces are more informative than others)
         #self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon','board','valid','debug_q','zero_ind_action_tuple', 'other'])
         self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon', 'board'])
+        self.all_data_df.to_csv(self.move_path,mode='a',index=False)
         self.loss_df = pd.DataFrame(columns= ['loss'])
         self.episode_df = pd.DataFrame(columns=['episode','reward'])
+        self.episode_df.to_csv(self.ep_path,mode='a',index=False)
 
         # Set up replay memory
         self.transitions = namedtuple('Transition', ('state','action','next_state','reward','done'))
@@ -177,7 +180,8 @@ class DQN():
                     log_action = "g"
                 current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':log_action, 'action':int(action), 'reward':int(reward), 'done':done, 'epsilon':"{0:.4f}".format(eps),'board':[self.env.board]},index=[0])
                 #breakpoint()
-                self.all_data_df=pd.concat([self.all_data_df, current_df],ignore_index=True)
+                current_df.to_csv(self.move_path,header=False,mode='a',index=False)
+                #self.all_data_df=pd.concat([self.all_data_df, current_df],ignore_index=True)
                 
                 # Append this step to the replay buffer
                 action, reward, done = torch.IntTensor([action]).to(self.device), torch.FloatTensor([reward]).to(self.device), torch.FloatTensor([done])
@@ -192,7 +196,7 @@ class DQN():
                 # Optimize the model
                 loss = self.learn(episode,t)
                 current_loss = pd.DataFrame({'loss':loss},index=[0])
-                self.loss_df = pd.concat([self.loss_df, current_loss],ignore_index=True)
+                #self.loss_df = pd.concat([self.loss_df, current_loss],ignore_index=True)
                 self.steps+=1
 
                 # If at an update interval, copy policy net to target net
@@ -205,7 +209,8 @@ class DQN():
 
             # Reset the episode reward before the next iteration
             episode_df = pd.DataFrame({'episode':episode, 'reward':episode_reward},index=[0])
-            self.episode_df=pd.concat([self.episode_df, episode_df],ignore_index=True)
+            episode_df.to_csv(self.ep_path,header=False,mode='a',index=False)
+            #self.episode_df=pd.concat([self.episode_df, episode_df],ignore_index=True)
             episode_reward=0
         
         # Log the results out to Neptune
