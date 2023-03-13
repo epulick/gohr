@@ -37,7 +37,7 @@ if __name__ == "__main__":
         args = yaml.load(param_file, Loader = yaml.SafeLoader)
     args.update({"RUN_TYPE":"cluster"})
     args.update({"PARALLEL":False})
-    args.update({"TRAIN_EPISODES":2000})
+    args.update({"TRAIN_EPISODES":5000})
     #args.update({"VERBOSE":1})
     if args['RUN_TYPE']=='cluster':
         yaml_name = yaml_path.split("/")[-1].split('.')[0]
