@@ -60,7 +60,8 @@ class ReplayMemory(object):
 class DQN():
     def __init__(self,env,args,log_paths):
         # Put onto correct hardware
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        #self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cpu")
 
         # Pull in the game environment
         self.env = env
