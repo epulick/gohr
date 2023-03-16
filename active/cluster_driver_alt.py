@@ -39,7 +39,7 @@ if __name__ == "__main__":
     args.update({"PARALLEL":False})
     args.update({"BATCH_SIZE":1})
     args.update({"TRAIN_EPISODES":2000})
-    args.update[{"HIDDEN_SIZES":[300,300]}]
+    args.update({"HIDDEN_SIZES":[300,300]})
     #args.update({"VERBOSE":1})
     if args['RUN_TYPE']=='cluster':
         yaml_name = yaml_path.split("/")[-1].split('.')[0]
