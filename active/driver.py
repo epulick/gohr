@@ -69,13 +69,13 @@ def single_execution(args):
     move_path = os.path.join(run_dir, 'move_data.csv')
     ep_path = os.path.join(run_dir, 'episode_data.csv')
 
-    if args["RUN_TYPE"]=='cluster':
-        with open(move_path,'w') as fp:
-            fp.write(args['CLUSTER_ID']+'_'+str(run_id)+'\n')
-            #fp.write(str(run_id)+'\n')
-        with open(ep_path,'w') as fp:
-            fp.write(args['CLUSTER_ID']+'_'+str(run_id)+'\n')
-            #fp.write(str(run_id)+'\n')
+    # if args["RUN_TYPE"]=='cluster':
+    #     with open(move_path,'w') as fp:
+    #         fp.write(args['CLUSTER_ID']+'_'+str(run_id)+'\n')
+    #         #fp.write(str(run_id)+'\n')
+    #     with open(ep_path,'w') as fp:
+    #         fp.write(args['CLUSTER_ID']+'_'+str(run_id)+'\n')
+    #         #fp.write(str(run_id)+'\n')
     
     log_paths = [move_path,ep_path]
     # Create the agent and train it

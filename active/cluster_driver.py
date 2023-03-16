@@ -36,8 +36,8 @@ if __name__ == "__main__":
     with open(yaml_path, 'r') as param_file:
         args = yaml.load(param_file, Loader = yaml.SafeLoader)
     args.update({"RUN_TYPE":"cluster"})
-    args.update({"PARALLEL":True})
-    args.update({"BATCH_SIZE":4})
+    args.update({"PARALLEL":False})
+    args.update({"BATCH_SIZE":1})
     args.update({"TRAIN_EPISODES":2000})
     #args.update({"VERBOSE":1})
     if args['RUN_TYPE']=='cluster':
