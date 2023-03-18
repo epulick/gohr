@@ -18,7 +18,7 @@ if __name__ == "__main__":
     cluster_process = str(sys.argv[4])
     cluster_id =cluster_job+"_"+cluster_process
     yaml_path=yaml_dir+yaml_config
-    repeats = 4
+    repeats = 5
 
     loader = yaml.SafeLoader
     loader.add_implicit_resolver(
