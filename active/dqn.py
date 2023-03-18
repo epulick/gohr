@@ -122,6 +122,7 @@ class DQN():
     def train(self):
         for episode in tqdm(range(self.n_episodes)) if self.tqdm else range(self.n_episodes):
             # Set initial variables for looping
+            all_data_df_list = []
             self.debug = 0
             done = 0
             episode_reward = 0
@@ -164,10 +165,11 @@ class DQN():
                 else:
                     log_action = "g"
                 current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':log_action, 'action':int(action), 'reward':int(reward), 'done':done, 'epsilon':"{0:.4f}".format(eps),'board':[self.env.board]},index=[0])
-                #breakpoint()
-                current_df.to_csv(self.move_path,header=False,mode='a',index=False)
-                #self.all_data_df=pd.concat([self.all_data_df, current_df],ignore_index=True)
+                all_data_df_list.append(current_df)
                 
+                #if done:
+                #    self.all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
+                #    self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon', 'board'])
                 # Append this step to the replay buffer
                 action, reward, done = torch.IntTensor([action]).to(self.device), torch.FloatTensor([reward]).to(self.device), torch.FloatTensor([done])
                 #action, reward = torch.IntTensor([action]), torch.FloatTensor([reward])
@@ -195,6 +197,8 @@ class DQN():
             # Reset the episode reward before the next iteration
             episode_df = pd.DataFrame({'episode':episode, 'reward':episode_reward},index=[0])
             episode_df.to_csv(self.ep_path,header=False,mode='a',index=False)
+            all_data_df=pd.concat(all_data_df_list,ignore_index=True)
+            all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
             #self.episode_df=pd.concat([self.episode_df, episode_df],ignore_index=True)
             episode_reward=0
 

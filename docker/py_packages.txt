@@ -7,3 +7,4 @@ torch==1.13.1
 pandas==1.5.2
 joblib==1.2.0
 tqdm==4.64.1
+pyYAML==6.0
