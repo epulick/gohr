@@ -3,7 +3,6 @@
 
 import numpy as np
 import subprocess, sys, re, json, os
-import time
 
 class RuleGameEngine():
 

@@ -1,7 +1,6 @@
 # Adapted from work by Shubham Bharti and Yiding Chen
 
 import numpy as np
-import neptune.new as neptune
 import os, sys, yaml, random, torch, copy, shutil,gzip
 from joblib import Parallel, delayed
 from math import ceil
@@ -83,8 +82,6 @@ def single_execution(args):
     agent.train()
     error_count = agent.env.error_count
     env.close_channel()
-    if args["RECORD"] and agent.run is not None:
-        agent.run.stop()
 
     # print("--------------------")
     # print("--------------------")
@@ -135,19 +132,11 @@ def run_experiment(args):
         # Update the seeds in the parameter file
         args.update({"SEEDS1": seeds1, "SEEDS2": seeds2, "SEEDS3": seeds3, "SEEDS4": seeds4})
 
-    # Set up the experiment id (more detailed if recording to Neptune)
+    # Set up the experiment id
     if args["RUN_TYPE"]=='cluster':
         exp_id=args["CLUSTER_ID"]
     else:
-        exp_id =  'other'
-        if args['RECORD']:
-            run = neptune.init_run(
-                project="eric-pulick/gohr-test",
-                source_files=["dqn.py, driver.py, featurization.py, rule_game_engine.py, rule_game_env.py"],
-                mode="async"
-            )
-            run_info = run.fetch()
-            exp_id = run_info['sys']['id']
+        exp_id = 'other'
 
     # Create directory for export, update the args, make the folder if needed
     exp_dir =  os.path.join(args['OUTPUT_DIR'], exp_id +"_"+ args['RULE_NAME'].split('/')[-1].split('.')[0])
@@ -185,14 +174,6 @@ def run_experiment(args):
             output = single_execution(nargs)
             outputs.append(output)
 
-    # Close out the run as needed
-    if args['RECORD']:
-        # Pending change to neptune
-        #run["params"]=stringify_unsupported(args)
-        run["params"]=args 
-        #run.sync()
-        #run.wait()
-        run.stop()
     return outputs
 
 # Function for testing this level of abstraction - may not be updated reliably

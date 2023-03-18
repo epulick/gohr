@@ -3,7 +3,6 @@
 
 import numpy as np
 import gym, os, sys
-import traceback
 from gym import spaces
 from rule_game_engine import *
 

@@ -9,8 +9,6 @@ import torch
 import torch.nn as nn
 #import torch.nn.functional as F
 #import torch.optim as optim
-import neptune.new as neptune
-from neptune.new.types import File
 from tqdm import tqdm
 from collections import namedtuple, deque
 
@@ -65,20 +63,6 @@ class DQN():
 
         # Pull in the game environment
         self.env = env
-
-        # Open up the relevant experiment in Neptune if experiment set to record
-        if args['RECORD']:
-            run = neptune.init_run(
-                project="eric-pulick/gohr-test",
-                with_id=args['EXP_ID'],
-                capture_stdout=False,
-                capture_stderr=False,
-                capture_hardware_metrics=False,
-            )
-            self.run = run
-            self.run_id = args["RUN_ID"]
-        else: 
-            self.run = None
         
         # Misc. parameter import
         self.eps_start, self.eps_end, self.eps_decay = args["EPS_START"], args['EPS_END'], args['EPS_DECAY']
@@ -213,11 +197,6 @@ class DQN():
             episode_df.to_csv(self.ep_path,header=False,mode='a',index=False)
             #self.episode_df=pd.concat([self.episode_df, episode_df],ignore_index=True)
             episode_reward=0
-        
-        # Log the results out to Neptune
-        if not(self.run==None):
-            loc = "log/"+str(self.run_id)+"_episode_reward"
-            self.run[loc].upload(File.as_html(self.episode_df))
 
     def select_action(self,state,mask,valid,ep,t):
         # epsilon greedy policy - epsilon decays exponentially with time

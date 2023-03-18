@@ -2,7 +2,6 @@
 
 import numpy as np
 import os, sys
-#from gym import spaces
 from rule_game_env import *
 
 class NaiveBoard(RuleGameEnv):

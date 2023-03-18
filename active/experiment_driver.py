@@ -1,11 +1,10 @@
 import numpy as np
-import gym, os, sys, yaml, random, torch, copy
+import os, sys, yaml
 from rule_game_engine import *
 from rule_game_env import *
 from rule_sets import *
 from featurization import *
 from driver import *
-from dqn import DQN
 
 def objective(trial, args):
     n_layers = trial.suggest_int('n_layers', 1,3)
