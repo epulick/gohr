@@ -1,5 +1,4 @@
 import os
-#os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import sys, yaml
 from rule_game_engine import *
 from rule_game_env import *

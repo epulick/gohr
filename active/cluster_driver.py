@@ -1,5 +1,4 @@
 import os
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import sys, yaml
 from rule_game_engine import *
 from rule_game_env import *
@@ -39,20 +38,16 @@ if __name__ == "__main__":
     args.update({"PARALLEL":False})
     args.update({"BATCH_SIZE":1})
     args.update({"TRAIN_EPISODES":2000})
-    #args.update({"VERBOSE":1})
-    if args['RUN_TYPE']=='cluster':
-        yaml_name = yaml_path.split("/")[-1].split('.')[0]
-        args.update({"YAML_NAME":yaml_name})
-        output_dir = "outputs/"+yaml_name
-        args.update({"OUTPUT_DIR":output_dir})
-        args.update({"RULE_NAME":rule_name})
-        args.update({"REPEAT":repeats})
-        args.update({"RECORD":0})
-        args.update({"CLUSTER_ID":cluster_id})
-        rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
-        args.update({'RULE_FILE_PATH' : rule_file_path})
-        #print(args)
-        run_experiment(args)
-    else:
-        breakpoint()
+    yaml_name = yaml_path.split("/")[-1].split('.')[0]
+    args.update({"YAML_NAME":yaml_name})
+    output_dir = "outputs/"+yaml_name
+    args.update({"OUTPUT_DIR":output_dir})
+    args.update({"RULE_NAME":rule_name})
+    args.update({"REPEAT":repeats})
+    args.update({"RECORD":0})
+    args.update({"CLUSTER_ID":cluster_id})
+    rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
+    args.update({'RULE_FILE_PATH' : rule_file_path})
+    #print(args)
+    run_experiment(args)
 
