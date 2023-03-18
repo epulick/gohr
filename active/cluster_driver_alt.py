@@ -38,7 +38,7 @@ if __name__ == "__main__":
     args.update({"PARALLEL":False})
     args.update({"BATCH_SIZE":1})
     args.update({"TRAIN_EPISODES":2000})
-    args.update({"HIDDEN_SIZES":[100]})
+    args.update({"HIDDEN_SIZES":[100,100]})
     yaml_name = yaml_path.split("/")[-1].split('.')[0]
     args.update({"YAML_NAME":yaml_name})
     output_dir = "outputs/"+yaml_name
