@@ -18,7 +18,7 @@ if __name__ == "__main__":
     cluster_process = str(sys.argv[4])
     cluster_id =cluster_job+"_"+cluster_process
     yaml_path=yaml_dir+yaml_config
-    repeats = 4
+    repeats = 5
 
     loader = yaml.SafeLoader
     loader.add_implicit_resolver(
@@ -38,7 +38,6 @@ if __name__ == "__main__":
     args.update({"PARALLEL":False})
     args.update({"BATCH_SIZE":1})
     args.update({"TRAIN_EPISODES":2000})
-    args.update({"HIDDEN_SIZES":[100,100]})
     yaml_name = yaml_path.split("/")[-1].split('.')[0]
     args.update({"YAML_NAME":yaml_name})
     output_dir = "outputs/"+yaml_name
@@ -49,6 +48,8 @@ if __name__ == "__main__":
     args.update({"CLUSTER_ID":cluster_id})
     rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
     args.update({'RULE_FILE_PATH' : rule_file_path})
+    # Experiment updates
+    args.update({"HIDDEN_SIZES":[700]})
     #print(args)
     run_experiment(args)
 
