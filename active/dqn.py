@@ -145,7 +145,7 @@ class DQN():
             for t in range(self.train_horizon):
                 # Step the environment forward with an action
                 action, action_type, eps, debug_q = self.select_action(state,mask,valid,episode,t)
-                next_state_dict, reward, done, _ = self.env.step(int(action))
+                next_state_dict, reward, done, move_result = self.env.step(int(action))
                 next_state = next_state_dict['features']
                 next_mask = next_state_dict['mask']
                 next_valid = next_state_dict['valid']
@@ -154,7 +154,7 @@ class DQN():
                 next_state = torch.from_numpy(next_state).float().to(self.device)
                 
                 # Add step reward to episode reward
-                episode_reward+=reward
+                episode_reward+=move_result #reward
 
                 # Write current step's data to a dataframe and concat with the main dataframe
                 #breakpoint()
@@ -164,7 +164,7 @@ class DQN():
                     log_action = "r"
                 else:
                     log_action = "g"
-                current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':log_action, 'action':int(action), 'reward':int(reward), 'done':done, 'epsilon':"{0:.4f}".format(eps),'board':[self.env.board]},index=[0])
+                current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':log_action, 'action':int(action), 'reward':int(move_result), 'done':done, 'epsilon':"{0:.4f}".format(eps),'board':[self.env.board]},index=[0])
                 all_data_df_list.append(current_df)
                 
                 #if done:
@@ -244,7 +244,7 @@ class DQN():
         batch =self.replay_memory.sample(self.batch_size)
         
         state, action, next_state, reward, done = map(torch.stack, zip(*batch))
-
+        
         # --------------
         # DEBUGGING BLOCK
         # --------------

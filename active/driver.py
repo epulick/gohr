@@ -9,6 +9,7 @@ from rule_game_env import *
 from rule_sets import *
 from featurization import *
 from dqn import DQN
+from reinforce import REINFORCE
 
 # Run a single training trajectory for the learner
 def single_execution(args):
@@ -78,7 +79,12 @@ def single_execution(args):
     
     log_paths = [move_path,ep_path]
     # Create the agent and train it
-    agent = DQN(env,args,log_paths)
+    if args["LEARNER"]=="DQN":
+        agent = DQN(env,args,log_paths)
+    elif args["LEARNER"]=="REINFORCE":
+        agent = REINFORCE(env,args,log_paths)
+    else:
+        breakpoint()
     agent.train()
     error_count = agent.env.error_count
     env.close_channel()

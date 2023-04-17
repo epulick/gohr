@@ -7,25 +7,21 @@ from featurization import *
 from driver import *
 
 def objective(trial, args):
-    n_layers = trial.suggest_int('n_layers', 1,3)
-    LR = trial.suggest_float('LR',0.00001,.001)
+    n_layers = trial.suggest_int('n_layers', 1,4)
+    LR = trial.suggest_float('LR',0.0001,0.01)
     hidden_sizes = []
-    gamma = trial.suggest_float('gamma',0.01,0.4)
-    size = trial.suggest_int('size',100,500)
-    decay = trial.suggest_int('decay',100,1000)
-    batch = trial.suggest_int('grad_batch',50,300)
-    clamp = trial.suggest_int('clamp',0,1)
-    optimizer = trial.suggest_categorical('optimizer',['ADAM','RMSprop'])
+    #gamma = trial.suggest_float('gamma',0.01,0.4)
+    size = trial.suggest_int('size',50,1000)
+    #decay = trial.suggest_int('decay',100,1000)
+    #batch = trial.suggest_int('grad_batch',50,300)
+    #clamp = trial.suggest_int('clamp',0,1)
+    #optimizer = trial.suggest_categorical('optimizer',['ADAM','RMSprop'])
 
     for i in range(n_layers):
         hidden_sizes.append(size)
     args.update({'HIDDEN_SIZES':hidden_sizes})
     args.update({'LR':LR})
-    args.update({'EPS_DECAY':decay})
-    args.update({'GRAD_BATCH_SIZE':batch})
-    args.update({'CLAMP':clamp})
-    args.update({'GAMMA':gamma})
-    args.update({'OPTIMIZER':optimizer})
+    #args.update({'OPTIMIZER':optimizer})
     results = run_experiment(args)
     return np.median(results)
 
@@ -34,7 +30,7 @@ def hyperparameter_tuning(args):
     study_name = args["YAML_NAME"]
     storage_name = "sqlite:///{}{}.db".format(args["OUTPUT_DIR"]+"/",study_name)
     study = optuna.create_study(study_name=study_name,storage=storage_name,direction = "minimize",load_if_exists=True)
-    study.optimize(lambda trial: objective(trial,args),n_trials=20)
+    study.optimize(lambda trial: objective(trial,args),n_trials=40)
 
     #pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     #complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])

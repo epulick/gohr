@@ -112,7 +112,11 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         else:
             self.move_list.append(action)
             self.error_count+=1
-        info, feature = {}, self.get_feature()
+        if (response_code==0):
+            info=0
+        else:
+            info=-1
+        feature = self.get_feature()
 
         return feature, reward, done, info 
 
