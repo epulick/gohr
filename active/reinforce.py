@@ -1,19 +1,12 @@
 
 import pandas as pd
 import numpy as np
-import copy
-import random, math
 
 import torch
 import torch.nn as nn
-#import torch.nn.functional as F
-#import torch.optim as optim
 from tqdm import tqdm
-from collections import namedtuple, deque
 
-np.set_printoptions(precision=2)
-
-verbose = 0
+#np.set_printoptions(precision=2)
 
 class MLP(nn.Module):
     def __init__(self, in_dim, out_dim, hidden_sizes, act):
@@ -38,22 +31,6 @@ class MLP(nn.Module):
     def forward(self,X):
         return self.network(X)
 
-# class ReplayMemory(object):
-#     def __init__(self, capacity, Transition):
-#         self.memory = deque([], maxlen=capacity)
-#         self.transitions = Transition
-
-#     # Add new experience to replay memory
-#     def push(self, *args):
-#         self.memory.append(self.transitions(*args))
-
-#     # Get a sample of the requested batch size
-#     def sample(self, batch_size):
-#         return random.sample(self.memory, batch_size)
-
-#     def __len__(self):
-#         return len(self.memory)
-
 class REINFORCE():
     def __init__(self,env,args,log_paths):
         # Put onto correct hardware
@@ -76,7 +53,7 @@ class REINFORCE():
         # Build the neural network (net and target_net)
         self.in_dim, self.out_dim = self.env.in_dim, self.env.out_dim
         self.net = MLP(self.in_dim,self.out_dim,args['HIDDEN_SIZES'],args["ACTIVATION"]).to(self.device)
-
+        #print(self.net)
         # Consider other optimizers or losses via parameter input
         if args['OPTIMIZER'] == 'ADAM':
             self.optimizer=torch.optim.Adam(self.net.parameters(),args['LR'])
@@ -95,10 +72,6 @@ class REINFORCE():
         self.loss_df = pd.DataFrame(columns= ['loss'])
         self.episode_df = pd.DataFrame(columns=['episode','reward'])
         self.episode_df.to_csv(self.ep_path,mode='a',index=False)
-
-        # Set up replay memory
-        #self.transitions = namedtuple('Transition', ('state','action','next_state','reward','done'))
-        #self.replay_memory = ReplayMemory(args['REPLAY_BUFFER_SIZE'], self.transitions)
 
     def transform_rewards(self,rewards, g):
         steps = len(rewards)
@@ -126,16 +99,7 @@ class REINFORCE():
             #actions = []
             log_probs = []
             rewards = []
-            # --------------
-            # DEBUGGING BLOCK
-            # --------------
-            # print("torch.from_numpy(state): ", torch.from_numpy(state))
-            # print("torch.from_numpy(state).float(): ", torch.from_numpy(state).float())
-            # print("torch.from_numpy(state).float().unsqueeze(0): ", torch.from_numpy(state).float().unsqueeze(0))
-            # print("torch.from_numpy(state).float().size: ", torch.from_numpy(state).float().size()
-            # print("torch.from_numpy(state).float().unsqueeze(0).size: ", torch.from_numpy(state).float().unsqueeze(0).size())
-            # Get the initial state value to start the looping
-            #state = torch.from_numpy(state).float().to(self.device)
+    
             # Loop over the per-episode training horizon
             for t in range(self.train_horizon):
                 # Step the environment forward with an action
@@ -145,9 +109,6 @@ class REINFORCE():
                 next_state = next_state_dict['features']
                 next_mask = next_state_dict['mask']
                 next_valid = next_state_dict['valid']
-
-                # Process next_state into a tensor
-                #next_state = torch.from_numpy(next_state).float().to(self.device)
                 
                 # Add step reward to episode reward
                 episode_reward+=move_result
@@ -155,14 +116,6 @@ class REINFORCE():
                 # Write current step's data to a dataframe and concat with the main dataframe
                 current_df = pd.DataFrame({'episode':episode, 'time':t, 'action':int(action), 'reward':int(move_result), 'done':done, 'board':[self.env.board]},index=[0])
                 all_data_df_list.append(current_df)
-                
-                #if done:
-                #    self.all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
-                #    self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon', 'board'])
-                # Append this step to the replay buffer
-                #action, reward, done = torch.IntTensor([action]).to(self.device), torch.FloatTensor([reward]).to(self.device), torch.FloatTensor([done])
-                #action, reward = torch.IntTensor([action]), torch.FloatTensor([reward])
-                #self.replay_memory.push(state, action, next_state, reward, done)
 
                 # Update values to prepare for next iteration
                 #states.append(state)
@@ -173,11 +126,7 @@ class REINFORCE():
                 state=next_state
                 mask=next_mask
                 valid=next_valid
-                
-                # Optimize the model
-                #loss = self.learn(episode,t)
-                #current_loss = pd.DataFrame({'loss':loss},index=[0])
-                #self.loss_df = pd.concat([self.loss_df, current_loss],ignore_index=True)
+
                 # Truncate episode early if the board is clear
                 if done:
                     break
@@ -187,7 +136,6 @@ class REINFORCE():
             episode_df.to_csv(self.ep_path,header=False,mode='a',index=False)
             all_data_df=pd.concat(all_data_df_list,ignore_index=True)
             all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
-            #self.episode_df=pd.concat([self.episode_df, episode_df],ignore_index=True)
             episode_reward=0
 
             # Pass off episode information for training
@@ -218,13 +166,8 @@ class REINFORCE():
     def learn(self,rewards,log_probs):
         
         self.optimizer.zero_grad()
-        #breakpoint()
-        #log_probs = torch.log(nn.functional.softmax(self.net(states)),dim=1)
-        #probs = torch.gather(log_probs,1,actions).squeeze()
-        #loss_vals = -1*rewards*probs
         loss_vals = -1*rewards*log_probs
         loss=torch.sum(loss_vals)
-        #breakpoint()
         loss.backward()
         self.optimizer.step()
 
