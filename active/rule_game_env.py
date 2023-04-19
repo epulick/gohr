@@ -27,6 +27,7 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         self.prev_board = None
         self.prev_attributes = None
         self.n_steps = args['N_STEPS']
+        self.learner = args['LEARNER']
         for i in range(self.n_steps):
             self.last_boards.append(None)
             self.last_moves.append(None)
@@ -110,7 +111,8 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
             self.last_attributes.pop(0)
             self.last_attributes.append(self.prev_attributes)
         else:
-            self.move_list.append(action)
+            if self.learner!="REINFORCE":
+                self.move_list.append(action)
             self.error_count+=1
         if (response_code==0):
             info=0
