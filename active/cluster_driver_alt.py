@@ -50,10 +50,10 @@ if __name__ == "__main__":
     args.update({'RULE_FILE_PATH' : rule_file_path})
     # Experiment updates for REINFORCE
     args.update({"LEARNER":"REINFORCE"})
-    args.update({"LR":0.0003})
+    args.update({"LR":0.003})
     args.update({"ACTIVATION":"LeakyReLU"})
     args.update({"OPTIMIZER":"ADAM"})
-    args.update({"TRAIN_EPISODES":6000})
+    args.update({"TRAIN_EPISODES":10000})
     args.update({"HIDDEN_SIZES":[500]})
     #print(args)
     run_experiment(args)
