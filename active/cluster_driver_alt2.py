@@ -37,7 +37,7 @@ if __name__ == "__main__":
     args.update({"RUN_TYPE":"cluster"})
     args.update({"PARALLEL":False})
     args.update({"BATCH_SIZE":1})
-    args.update({"TRAIN_EPISODES":2000})
+    args.update({"TRAIN_EPISODES":2500})
     yaml_name = yaml_path.split("/")[-1].split('.')[0]
     args.update({"YAML_NAME":yaml_name})
     output_dir = "outputs/"+yaml_name
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
     args.update({'RULE_FILE_PATH' : rule_file_path})
     # Experiment updates
-    args.update({"HIDDEN_SIZES":[500]})
+    args.update({"HIDDEN_SIZES":[600,300]})
     #print(args)
     run_experiment(args)
 
