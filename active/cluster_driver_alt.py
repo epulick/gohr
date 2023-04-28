@@ -18,7 +18,7 @@ if __name__ == "__main__":
     cluster_process = str(sys.argv[4])
     cluster_id =cluster_job+"_"+cluster_process
     yaml_path=yaml_dir+yaml_config
-    repeats = 3
+    repeats = 5
 
     loader = yaml.SafeLoader
     loader.add_implicit_resolver(
@@ -50,11 +50,11 @@ if __name__ == "__main__":
     args.update({'RULE_FILE_PATH' : rule_file_path})
     # Experiment updates for REINFORCE
     args.update({"LEARNER":"REINFORCE"})
-    args.update({"LR":0.0006})
+    args.update({"LR":0.0004})
     args.update({"ACTIVATION":"LeakyReLU"})
     args.update({"OPTIMIZER":"RMSprop"})
-    args.update({"TRAIN_EPISODES":20000})
-    args.update({"HIDDEN_SIZES":[1500]})
+    args.update({"TRAIN_EPISODES":10000})
+    args.update({"HIDDEN_SIZES":[3000]})
     #print(args)
     run_experiment(args)
 

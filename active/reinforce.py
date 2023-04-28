@@ -167,7 +167,7 @@ class REINFORCE():
         
         self.optimizer.zero_grad()
         loss_vals = -1*rewards*log_probs
-        loss=torch.sum(loss_vals)
+        loss=torch.mean(loss_vals)
         loss.backward()
         self.optimizer.step()
 

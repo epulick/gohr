@@ -49,7 +49,7 @@ if __name__ == "__main__":
     rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
     args.update({'RULE_FILE_PATH' : rule_file_path})
     # Experiment updates
-    args.update({"HIDDEN_SIZES":[600,300]})
+    args.update({"HIDDEN_SIZES":[500,500]})
     #print(args)
     run_experiment(args)
 
