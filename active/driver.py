@@ -109,9 +109,11 @@ def single_execution(args):
     #print(run_dir)
     # Zip up folder and delete raw move csv
     #shutil.make_archive(os.path.join(run_dir,'move_data'),"gzip",root_dir=run_dir,base_dir='move_data.csv')
-    with open(move_path,'rb') as f_in:
-        with gzip.open(os.path.join(run_dir, 'move_data.gz'), 'wb') as f_out:
-            shutil.copyfileobj(f_in,f_out)
+
+    # Uncomment for gz
+    # with open(move_path,'rb') as f_in:
+    #     with gzip.open(os.path.join(run_dir, 'move_data.gz'), 'wb') as f_out:
+    #         shutil.copyfileobj(f_in,f_out)
     os.remove(move_path)
     return agent.env.error_count
 

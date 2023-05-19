@@ -105,8 +105,10 @@ class DQN():
         # Set up dataframe for recording the results
         # to do - consider adding return code (some pieces are more informative than others)
         #self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon','board','valid','debug_q','zero_ind_action_tuple', 'other'])
-        self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon', 'board'])
+        #self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon', 'board'])
+        self.all_data_df = pd.DataFrame({'episode':0, 'time':0, 'action_type':0, 'action':0, 'reward':0, 'done':0, 'epsilon':0,'board':0},index=[0])
         self.all_data_df.to_csv(self.move_path,mode='a',index=False)
+        
         self.loss_df = pd.DataFrame(columns= ['loss'])
         self.episode_df = pd.DataFrame(columns=['episode','reward'])
         self.episode_df.to_csv(self.ep_path,mode='a',index=False)
