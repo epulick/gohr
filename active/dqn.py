@@ -106,7 +106,7 @@ class DQN():
         # to do - consider adding return code (some pieces are more informative than others)
         #self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon','board','valid','debug_q','zero_ind_action_tuple', 'other'])
         self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon', 'board'])
-        #self.all_data_df.to_csv(self.move_path,mode='a',index=False)
+        self.all_data_df.to_csv(self.move_path,mode='a',index=False)
         self.loss_df = pd.DataFrame(columns= ['loss'])
         self.episode_df = pd.DataFrame(columns=['episode','reward'])
         self.episode_df.to_csv(self.ep_path,mode='a',index=False)
@@ -164,8 +164,8 @@ class DQN():
                     log_action = "r"
                 else:
                     log_action = "g"
-                current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':log_action, 'action':int(action), 'reward':int(move_result), 'done':done, 'epsilon':"{0:.4f}".format(eps),'board':[self.env.board]},index=[0])
-                all_data_df_list.append(current_df)
+                #current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':log_action, 'action':int(action), 'reward':int(move_result), 'done':done, 'epsilon':"{0:.4f}".format(eps),'board':[self.env.board]},index=[0])
+                #all_data_df_list.append(current_df)
                 
                 #if done:
                 #    self.all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
@@ -197,8 +197,8 @@ class DQN():
             # Reset the episode reward before the next iteration
             episode_df = pd.DataFrame({'episode':episode, 'reward':episode_reward},index=[0])
             episode_df.to_csv(self.ep_path,header=False,mode='a',index=False)
-            all_data_df=pd.concat(all_data_df_list,ignore_index=True)
-            all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
+            #all_data_df=pd.concat(all_data_df_list,ignore_index=True)
+            #all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
             #self.episode_df=pd.concat([self.episode_df, episode_df],ignore_index=True)
             episode_reward=0
 
