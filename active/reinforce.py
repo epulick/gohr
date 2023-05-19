@@ -115,7 +115,7 @@ class REINFORCE():
 
                 # Write current step's data to a dataframe and concat with the main dataframe
                 current_df = pd.DataFrame({'episode':episode, 'time':t, 'action':int(action), 'reward':int(move_result), 'done':done, 'board':[self.env.board]},index=[0])
-                all_data_df_list.append(current_df)
+                #all_data_df_list.append(current_df)
 
                 # Update values to prepare for next iteration
                 #states.append(state)
@@ -134,8 +134,8 @@ class REINFORCE():
             # Reset the episode reward before the next iteration
             episode_df = pd.DataFrame({'episode':episode, 'reward':episode_reward},index=[0])
             episode_df.to_csv(self.ep_path,header=False,mode='a',index=False)
-            all_data_df=pd.concat(all_data_df_list,ignore_index=True)
-            all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
+            #all_data_df=pd.concat(all_data_df_list,ignore_index=True)
+            #all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
             episode_reward=0
 
             # Pass off episode information for training
