@@ -18,7 +18,7 @@ if __name__ == "__main__":
     cluster_process = str(sys.argv[4])
     cluster_id =cluster_job+"_"+cluster_process
     yaml_path=yaml_dir+yaml_config
-    repeats = 2
+    repeats = 1
 
     loader = yaml.SafeLoader
     loader.add_implicit_resolver(
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     args.update({"RUN_TYPE":"cluster"})
     args.update({"PARALLEL":False})
     args.update({"BATCH_SIZE":1})
-    args.update({"TRAIN_EPISODES":2500})
+    args.update({"TRAIN_EPISODES":4000})
     yaml_name = yaml_path.split("/")[-1].split('.')[0]
     args.update({"YAML_NAME":yaml_name})
     output_dir = "outputs/"+yaml_name
