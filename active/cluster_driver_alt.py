@@ -53,7 +53,7 @@ if __name__ == "__main__":
     args.update({"LR":0.0007})
     args.update({"ACTIVATION":"LeakyReLU"})
     args.update({"OPTIMIZER":"RMSprop"})
-    args.update({"TRAIN_EPISODES":20000})
+    args.update({"TRAIN_EPISODES":40000})
     args.update({"HIDDEN_SIZES":[1000]})
     #print(args)
     run_experiment(args)
