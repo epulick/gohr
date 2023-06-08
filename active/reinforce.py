@@ -1,7 +1,6 @@
 
 import pandas as pd
 import numpy as np
-
 import torch
 import torch.nn as nn
 from tqdm import tqdm
@@ -65,11 +64,9 @@ class REINFORCE():
             breakpoint()
 
         # Set up dataframe for recording the results
-        # to do - consider adding return code (some pieces are more informative than others)
-        #self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon','board','valid','debug_q','zero_ind_action_tuple', 'other'])
         self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action', 'reward', 'done', 'board'])
         self.all_data_df.to_csv(self.move_path,mode='a',index=False)
-        self.loss_df = pd.DataFrame(columns= ['loss'])
+        #self.loss_df = pd.DataFrame(columns= ['loss'])
         self.episode_df = pd.DataFrame(columns=['episode','reward'])
         self.episode_df.to_csv(self.ep_path,mode='a',index=False)
 
@@ -95,8 +92,6 @@ class REINFORCE():
             mask = state_dict['mask']
             valid = state_dict['valid']
 
-            #states = []
-            #actions = []
             log_probs = []
             rewards = []
     
@@ -115,11 +110,10 @@ class REINFORCE():
 
                 # Write current step's data to a dataframe and concat with the main dataframe
                 current_df = pd.DataFrame({'episode':episode, 'time':t, 'action':int(action), 'reward':int(move_result), 'done':done, 'board':[self.env.board]},index=[0])
-                #all_data_df_list.append(current_df)
+                # Comment out to stop logging move data if file sizes are too large
+                all_data_df_list.append(current_df)
 
                 # Update values to prepare for next iteration
-                #states.append(state)
-                #actions.append(action)
                 rewards.append(reward)
                 log_probs.append(log_prob)
 
@@ -134,13 +128,12 @@ class REINFORCE():
             # Reset the episode reward before the next iteration
             episode_df = pd.DataFrame({'episode':episode, 'reward':episode_reward},index=[0])
             episode_df.to_csv(self.ep_path,header=False,mode='a',index=False)
-            #all_data_df=pd.concat(all_data_df_list,ignore_index=True)
-            #all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
+            # Comment out to stop logging move data if file sizes are too large
+            all_data_df=pd.concat(all_data_df_list,ignore_index=True)
+            all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
             episode_reward=0
 
             # Pass off episode information for training
-            #t_states = torch.FloatTensor(np.array(states))
-            #t_actions = torch.LongTensor(actions).unsqueeze(-1)
             t_rewards = torch.FloatTensor(self.transform_rewards(rewards,self.gamma))
             t_log_probs = torch.stack(log_probs)
             #print(rewards)

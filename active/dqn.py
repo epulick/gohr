@@ -7,8 +7,6 @@ import random, math
 
 import torch
 import torch.nn as nn
-#import torch.nn.functional as F
-#import torch.optim as optim
 from tqdm import tqdm
 from collections import namedtuple, deque
 
@@ -71,7 +69,6 @@ class DQN():
         self.batch_size = args['GRAD_BATCH_SIZE']
         self.gamma = args['GAMMA']
         self.sync = args ['TARGET_UPDATE_FREQ']
-        self.reward_map = args['REWARD_MAPPING']
         self.steps = 0
         self.move_path,self.ep_path = log_paths[0],log_paths[1]
         if args["RUN_TYPE"]=='cluster':
@@ -82,7 +79,6 @@ class DQN():
         # Build the neural network (net and target_net)
         self.in_dim, self.out_dim = self.env.in_dim, self.env.out_dim
         self.net = QNet(self.in_dim,self.out_dim,args['HIDDEN_SIZES'],args["ACTIVATION"]).to(self.device)
-        #self.net = self.make_nn(self.in_dim, self.out_dim, args['HIDDEN_SIZES'])#.to(self.device)
         self.target_net = copy.deepcopy(self.net)
         self.clamp = args["CLAMP"]
 
@@ -90,8 +86,7 @@ class DQN():
         for p in self.target_net.parameters():
             p.requires_grad = False
 
-        # TO-DO
-        # Consider other optimizers or losses via parameter input
+        # Choose optimizer
         if args['OPTIMIZER'] == 'ADAM':
             self.optimizer=torch.optim.Adam(self.net.parameters(),args['LR'])
         elif args['OPTIMIZER'] == 'RMSprop':
@@ -103,13 +98,12 @@ class DQN():
         self.loss = nn.SmoothL1Loss()
 
         # Set up dataframe for recording the results
-        # to do - consider adding return code (some pieces are more informative than others)
-        #self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon','board','valid','debug_q','zero_ind_action_tuple', 'other'])
-        #self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon', 'board'])
-        self.all_data_df = pd.DataFrame({'episode':0, 'time':0, 'action_type':0, 'action':0, 'reward':0, 'done':0, 'epsilon':0,'board':0},index=[0])
+        # Switch commented lines as part of removing move-by-move results
+        self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon', 'board'])
+        #self.all_data_df = pd.DataFrame({'episode':0, 'time':0, 'action_type':0, 'action':0, 'reward':0, 'done':0, 'epsilon':0,'board':0},index=[0])
         self.all_data_df.to_csv(self.move_path,mode='a',index=False)
         
-        self.loss_df = pd.DataFrame(columns= ['loss'])
+        #self.loss_df = pd.DataFrame(columns= ['loss'])
         self.episode_df = pd.DataFrame(columns=['episode','reward'])
         self.episode_df.to_csv(self.ep_path,mode='a',index=False)
 
@@ -156,28 +150,21 @@ class DQN():
                 next_state = torch.from_numpy(next_state).float().to(self.device)
                 
                 # Add step reward to episode reward
-                episode_reward+=move_result #reward
+                episode_reward+=move_result 
 
                 # Write current step's data to a dataframe and concat with the main dataframe
-                #breakpoint()
-                #current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':action_type, 'action':int(action), 'reward':int(reward), 'done':done, 'epsilon':eps,'board':[self.env.board],'valid':[valid],'debug_q':[debug_q], 'zero_ind_action_tuple':[self.env.action_index_to_tuple(action)], 'other':'none'},index=[0])
-                #breakpoint()
                 if action_type=="random":
                     log_action = "r"
                 else:
                     log_action = "g"
-                #current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':log_action, 'action':int(action), 'reward':int(move_result), 'done':done, 'epsilon':"{0:.4f}".format(eps),'board':[self.env.board]},index=[0])
-                #all_data_df_list.append(current_df)
+                current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':log_action, 'action':int(action), 'reward':int(move_result), 'done':done, 'epsilon':"{0:.4f}".format(eps),'board':[self.env.board]},index=[0])
+                all_data_df_list.append(current_df)
                 
-                #if done:
-                #    self.all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
-                #    self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done','epsilon', 'board'])
                 # Append this step to the replay buffer
                 action, reward, done = torch.IntTensor([action]).to(self.device), torch.FloatTensor([reward]).to(self.device), torch.FloatTensor([done])
-                #action, reward = torch.IntTensor([action]), torch.FloatTensor([reward])
                 self.replay_memory.push(state, action, next_state, reward, done)
 
-                # TO DO - double check on behavior at end of episode
+                # Set up next iteration
                 state=next_state
                 mask=next_mask
                 valid=next_valid
@@ -185,7 +172,6 @@ class DQN():
                 # Optimize the model
                 loss = self.learn(episode,t)
                 current_loss = pd.DataFrame({'loss':loss},index=[0])
-                #self.loss_df = pd.concat([self.loss_df, current_loss],ignore_index=True)
                 self.steps+=1
 
                 # If at an update interval, copy policy net to target net
@@ -199,9 +185,8 @@ class DQN():
             # Reset the episode reward before the next iteration
             episode_df = pd.DataFrame({'episode':episode, 'reward':episode_reward},index=[0])
             episode_df.to_csv(self.ep_path,header=False,mode='a',index=False)
-            #all_data_df=pd.concat(all_data_df_list,ignore_index=True)
-            #all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
-            #self.episode_df=pd.concat([self.episode_df, episode_df],ignore_index=True)
+            all_data_df=pd.concat(all_data_df_list,ignore_index=True)
+            all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
             episode_reward=0
 
     def select_action(self,state,mask,valid,ep,t):
@@ -215,7 +200,6 @@ class DQN():
             action = random.choice(valid)
             # Alternative implementation which doesn't mask out 'invalid actions'
             #action = self.env.action_space.sample()
-
             action_type = 'random'
 
         # Greedy action per policy

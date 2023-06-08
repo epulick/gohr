@@ -35,7 +35,7 @@ class RuleGameEngine():
         self.object_space, self.bucket_space, self.color_space, self.shape_space = args['OBJECT_SPACE'], args['BUCKET_SPACE'], args['COLOR_SPACE'], args['SHAPE_SPACE']
         self.index_space = self.board_size*self.board_size
         self.r_accept, self.r_reject = float(args['R_ACCEPT']), float(args['R_REJECT'])
-        self.horizon, self.time_left, self.shaping = args['TRAIN_HORIZON'], args['TRAIN_HORIZON'], args['SHAPING']
+        self.horizon, self.time_left, self.shaping = args['TRAIN_HORIZON'], args['TRAIN_HORIZON'], False
         self.seed, self.board = args['SEED'], None
         self.rule_file_path, self.verbose = args['RULE_FILE_PATH'], args['VERBOSE']
 

@@ -34,15 +34,9 @@ def single_execution(args):
         torch.manual_seed(int(args["SEEDS2"][run_id]))     
         np.random.seed(int(args["SEEDS3"][run_id]))
         random.seed(int(args["SEEDS4"][run_id]))
-    # Copied from Shubham/Yiding, this structure isn't currently used (10/30/22)
     else:
-        seed = run_id + args['SEED']
-        args['SEED'] = seed      # if fix_cgs_seed is true then cgs_seed is args['SEED'] for all runs else cgs_seed is run_id 
-        torch.manual_seed(seed)     # for each run_id, set seed = run_id + 1 
-        np.random.seed(seed)
-        random.seed(seed)
+        breakpoint()
 
-    # TO-DO - Make this configurable in the parameter file
     # Choose the desired featurization
     if args['FEATURIZATION']=='NAIVE_BOARD':
         env = NaiveBoard(args)
@@ -69,14 +63,6 @@ def single_execution(args):
     move_path = os.path.join(run_dir, 'move_data.csv')
     ep_path = os.path.join(run_dir, 'episode_data.csv')
 
-    # if args["RUN_TYPE"]=='cluster':
-    #     with open(move_path,'w') as fp:
-    #         fp.write(args['CLUSTER_ID']+'_'+str(run_id)+'\n')
-    #         #fp.write(str(run_id)+'\n')
-    #     with open(ep_path,'w') as fp:
-    #         fp.write(args['CLUSTER_ID']+'_'+str(run_id)+'\n')
-    #         #fp.write(str(run_id)+'\n')
-    
     log_paths = [move_path,ep_path]
     # Create the agent and train it
     if args["LEARNER"]=="DQN":
@@ -89,31 +75,18 @@ def single_execution(args):
     error_count = agent.env.error_count
     env.close_channel()
 
-    # print("--------------------")
-    # print("--------------------")
-    # print("Errors made in this trajectory: ", agent.env.error_count)
-    # print("--------------------")
-    # print("--------------------")
-
     # Write data out
     if args["RUN_TYPE"]=='cluster':
         agent.all_data_df['cluster_id']=args['CLUSTER_ID']+'_'+str(run_id)
         agent.episode_df['cluster_id']=args['CLUSTER_ID']+'_'+str(run_id)
-        #agent.loss_df['cluster_id']=args['CLUSTER_ID']+'_'+str(run_id)
-    #agent.all_data_df.to_csv(os.path.join(run_dir, 'move_data.gz'),index=False,compression='gzip')
-    #agent.episode_df.to_csv(os.path.join(run_dir, 'episode_data.csv'),index=False)
-    #agent.loss_df.to_csv(os.path.join(run_dir, 'loss_data.csv'),index=False)
+    
     args.update({'RUN_ID':run_id.item(),"SEEDS1":seed1,"SEEDS2":seed2,"SEEDS3":seed3,"SEEDS4":seed4})
     with open(run_dir+'/data.yaml', 'w') as outfile:
         yaml.dump(args, outfile)
-    #print(run_dir)
-    # Zip up folder and delete raw move csv
-    #shutil.make_archive(os.path.join(run_dir,'move_data'),"gzip",root_dir=run_dir,base_dir='move_data.csv')
 
-    # Uncomment for gz
-    # with open(move_path,'rb') as f_in:
-    #     with gzip.open(os.path.join(run_dir, 'move_data.gz'), 'wb') as f_out:
-    #         shutil.copyfileobj(f_in,f_out)
+    with open(move_path,'rb') as f_in:
+        with gzip.open(os.path.join(run_dir, 'move_data.gz'), 'wb') as f_out:
+            shutil.copyfileobj(f_in,f_out)
     os.remove(move_path)
     return agent.env.error_count
 
