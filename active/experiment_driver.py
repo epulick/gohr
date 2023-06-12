@@ -2,7 +2,7 @@ import numpy as np
 import os, sys, yaml
 from rule_game_engine import *
 from rule_game_env import *
-from rule_sets import *
+#from rule_sets import *
 from featurization import *
 from driver import *
 

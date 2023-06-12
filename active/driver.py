@@ -6,7 +6,7 @@ from joblib import Parallel, delayed
 from math import ceil
 from rule_game_engine import *
 from rule_game_env import *
-from rule_sets import *
+#from rule_sets import *
 from featurization import *
 from dqn import DQN
 from reinforce import REINFORCE
