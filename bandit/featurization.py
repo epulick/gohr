@@ -37,6 +37,20 @@ def get_bucket(pd,reference):
     #print(bucket_tuple)
     return np.ravel_multi_index(bucket_tuple,tuple([5 for x in range(reference)]))
 
+def get_quadrant(pd,reference):
+    cell = get_cell(pd,None)+1
+    if cell in [1,2,3,7,8,9,13,14,15]:
+        return 0
+    elif cell in [4,5,6,10,11,12,16,17,18]:
+        return 1
+    elif cell in [19,20,21,25,26,27,31,32,33]:
+        return 2
+    elif cell in [22,23,24,28,29,30,34,35,36]:
+        return 3
+    else:
+        print("error calculating quadrant")
+        breakpoint()
+
 class ShapeOnly(RuleGameEnv):
     def __init__(self,args):
         super(ShapeOnly,self).__init__(args)
@@ -58,10 +72,13 @@ class ShapeOnly(RuleGameEnv):
         return feature_dict
 
 class ProcessedEnv(RuleGameEnv):
-    def __init__(self,env,args):
+    def __init__(self,args):
         super(ProcessedEnv,self).__init__(args)
         self.model_features = args['MODEL_FEATURES']
-        self.model_features.append(['move_row','move_col'])
+        if len(self.model_features)<1:
+            print("Did you forget to add model features?")
+            breakpoint()
+        
         #self.feature_sets = []
         #self.feature_arrangements = args['FEATURE_ARRANGEMENTS']
         #for r in self.feature_arrangements:
@@ -77,6 +94,7 @@ class ProcessedEnv(RuleGameEnv):
                        'move_col':{'input_space':self.board_size, 'func':get_col,'reference':1},
                        'row':{'input_space':self.board_size, 'func':get_row,'reference':0},
                        'col':{'input_space':self.board_size, 'func':get_col,'reference':0},
+                       'quadrant':{'input_space':4,'func':get_quadrant,'reference':None},
                        'cell':{'input_space':self.board_size*self.board_size,'func':get_cell,'reference':None},
                        'bucket1':{'input_space':self.bucket_space+1,'func':get_bucket,'reference':1},
                        'bucket2':{'input_space':(self.bucket_space+1)**2,'func':get_bucket,'reference':2},
@@ -95,21 +113,27 @@ class ProcessedEnv(RuleGameEnv):
 
     def process_features(self):
         self.feature_vals = dict.fromkeys(self.model_features)
+        self.feature_vals['move_row']=None
+        self.feature_vals['move_col']=None
         if len(self.board)>0:
             piece = random.choice(self.board)
             processing_dict = {'piece':piece,'full_move_list':self.full_move_list,'reduced_move_list':self.reduced_move_list,'board_list':self.board_list}
+            self.feature_vals['move_row'] = get_row(processing_dict,1)
+            self.feature_vals['move_col'] = get_col(processing_dict,1)
             for feat in self.model_features:
                 func = self.feature_info[feat]['func']
                 ref = self.feature_info[feat]['reference']
                 self.feature_vals[feat]=func(processing_dict,ref)
-            
+    
+    def get_feature(self):
+        self.process_features()
+        return self.feature_vals
+    
     def return_feature(self,feat):
-        return {'move_row':None,'move_col':None,'features':self.feature_vals[feat]}
+        return {'move_row':self.feature_vals['move_row'],'move_col':self.feature_vals['move_col'],'features':self.feature_vals[feat]}
 
-    def calc_dims(self,feat_arr):
-        dims = 1
-        for feat in feat_arr:
-            dims*=self.feature_info[feat]
+    def calc_dim(self,feat_arr):
+        dims = tuple(self.feature_info[feat]['input_space'] for feat in feat_arr)
         return dims
 
 

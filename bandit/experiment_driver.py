@@ -37,18 +37,18 @@ from driver import *
 #     for key, value in trial.params.items():
 #         print("    {}: {}".format(key, value))
     
-# def rule_run(args, rule_dir_path):
-#     # Add to rules list as desired
-#     rules_list = ["1_2_color_4m.txt"]
-#     computation_batch = 1
-#     repeats = 8
-#     for rule in rules_list:
-#         args.update({"RULE_NAME":rule})
-#         args.update({"BATCH_SIZE":computation_batch})
-#         args.update({"REPEAT":repeats})
-#         rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
-#         args.update({'RULE_FILE_PATH' : rule_file_path})
-#         run_experiment(args)
+def rule_run(args, rule_dir_path):
+    # Add to rules list as desired
+    rules_list = ["1_2_color_4m.txt"]
+    computation_batch = 1
+    repeats = 2
+    for rule in rules_list:
+        args.update({"RULE_NAME":rule})
+        args.update({"BATCH_SIZE":computation_batch})
+        args.update({"REPEAT":repeats})
+        rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
+        args.update({'RULE_FILE_PATH' : rule_file_path})
+        run_experiment(args)
 
 if __name__ == "__main__":
     rule_dir_path = sys.argv[1]
@@ -87,11 +87,11 @@ if __name__ == "__main__":
     #     args.update({"YAML_NAME":yaml_name})
     #     hyperparameter_tuning(args)
     # # For batch local runs (largely deprecated now with CHTC functionality)
-    # elif args['RUN_TYPE']=='rule_run':
-    #     yaml_name = yaml_path.split("/")[-1].split('.')[0]
-    #     args.update({"YAML_NAME":yaml_name})
-    #     output_dir = "outputs/rule_runs/"+yaml_name
-    #     args.update({"OUTPUT_DIR":output_dir})
-    #     rule_run(args,rule_dir_path)
+    elif args['RUN_TYPE']=='rule_run':
+        yaml_name = yaml_path.split("/")[-1].split('.')[0]
+        args.update({"YAML_NAME":yaml_name})
+        output_dir = "outputs/rule_runs/"+yaml_name
+        args.update({"OUTPUT_DIR":output_dir})
+        rule_run(args,rule_dir_path)
     else:
         breakpoint()

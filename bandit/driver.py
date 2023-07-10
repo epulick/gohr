@@ -8,9 +8,8 @@ from rule_game_engine import *
 from rule_game_env import *
 #from rule_sets import *
 from featurization import *
-from dqn import DQN
-from reinforce import REINFORCE
 from tabular_bandit import tabular_bandit
+from meta_bandit import bandit,meta_bandit
 
 # Run a single training trajectory for the learner
 def single_execution(args):
@@ -53,6 +52,8 @@ def single_execution(args):
         env= Naive_N_Board_SparseDense_Action_SparseDense(args)
     elif args['FEATURIZATION']=='NAIVE_N_BDa_AS':
         env=Naive_N_Board_Dense_alt_Action_Sparse(args)
+    elif args['FEATURIZATION']=='INT':
+        env=ProcessedEnv(args)
     else:
         breakpoint()
 
@@ -71,7 +72,7 @@ def single_execution(args):
     elif args["LEARNER"]=="REINFORCE":
         agent = REINFORCE(env,args,log_paths)
     elif args["LEARNER"]=='BANDIT':
-        agent = tabular_bandit(env,args,log_paths)
+        agent = meta_bandit(env,args,log_paths)
     else:
         breakpoint()
 
@@ -88,10 +89,10 @@ def single_execution(args):
     with open(run_dir+'/data.yaml', 'w') as outfile:
         yaml.dump(args, outfile)
 
-    with open(move_path,'rb') as f_in:
-        with gzip.open(os.path.join(run_dir, 'move_data.gz'), 'wb') as f_out:
-            shutil.copyfileobj(f_in,f_out)
-    os.remove(move_path)
+    # with open(move_path,'rb') as f_in:
+    #     with gzip.open(os.path.join(run_dir, 'move_data.gz'), 'wb') as f_out:
+    #         shutil.copyfileobj(f_in,f_out)
+    # os.remove(move_path)
     return agent.env.error_count
 
 def debug_execution(args):
@@ -174,10 +175,9 @@ def test_driver(args):
         env = RandomPieceSelection(args)
     elif args['FEATURIZATION']=='INT':
         env = ProcessedEnv(args)
-        breakpoint()
     else:
         breakpoint()
-    phi = env.get_feature()
+    #phi = env.get_feature()
     run_id = args['RUN_ID']
     # Create the output directory for generated files
     run_dir = os.path.join(exp_dir, str(run_id))
@@ -190,14 +190,14 @@ def test_driver(args):
     log_paths = [move_path,ep_path]
 
     # Test the DQN creation
-    agent = tabular_bandit(env,args,log_paths)
+    agent = meta_bandit(env,args,log_paths)
 
     agent.train()
-    print(agent.q_values)
+    #print(agent.q_values)
     output_dir = args["OUTPUT_DIR"]
 
     #agent.all_data_df.to_csv(os.path.join(output_dir, 'move_data.csv'))
-    agent.episode_df.to_csv(os.path.join(output_dir, 'episode_data.csv'))
+    #agent.episode_df.to_csv(os.path.join(output_dir, 'episode_data.csv'))
 
 if __name__ == "__main__":
     print("starting driver")

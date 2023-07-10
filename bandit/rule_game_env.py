@@ -97,7 +97,7 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         # 7 (move rejected since piece is immovable)
 
         if(response_code==0):
-            print(action_row_index,action_col_index,action_bucket_index)
+            #print(action_row_index,action_col_index,action_bucket_index)
             self.full_move_list.append(self.action_tuple_to_index(action_row_index-1,action_col_index-1,action_bucket_index))
             self.reduced_move_list.append(action_bucket_index)
             self.board_list.append(self.prev_board)
