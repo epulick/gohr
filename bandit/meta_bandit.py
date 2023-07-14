@@ -163,5 +163,5 @@ class bandit():
             if old_val==reward:
                 self.credibility+=1
             else:
-                self.credibility-=2
-                # Suspect there is a bug in this causing some runs to be massive failures
+                self.credibility-=3
+                # Suspect there is a bug in this causing some runs to be massive failures (when an algorithm is instantly discredited)

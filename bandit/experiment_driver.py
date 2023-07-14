@@ -39,9 +39,13 @@ from driver import *
     
 def rule_run(args, rule_dir_path):
     # Add to rules list as desired
-    rules_list = ["1_2_color_4m.txt"]
+    rules_list = ["1_1_color_4m.txt","1_1_color_3m_cua.txt","1_2_color_4m.txt",
+                  "1_1_shape_4m.txt","1_1_shape_3m_cua.txt","1_2_shape_4m.txt",
+                  "quadrantNearby.txt","quadrantNearbyTwoFree.txt",
+                  "clockwiseZeroStart.txt", "clockwiseTwoFreeAlt.txt","clockwiseTwoFree.txt",
+                  "bottomLeft_then_topRight.txt","bottom_then_top.txt"]
     computation_batch = 1
-    repeats = 2
+    repeats = 48
     for rule in rules_list:
         args.update({"RULE_NAME":rule})
         args.update({"BATCH_SIZE":computation_batch})
