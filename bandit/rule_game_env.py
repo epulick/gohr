@@ -97,17 +97,10 @@ class RuleGameEnv(gym.Env, RuleGameEngine):
         # 7 (move rejected since piece is immovable)
 
         if(response_code==0):
-            #print(action_row_index,action_col_index,action_bucket_index)
+            # Only update the move/board lists if the action was accepted (i.e., there has been a change in state of the MDP)
             self.full_move_list.append(self.action_tuple_to_index(action_row_index-1,action_col_index-1,action_bucket_index))
             self.reduced_move_list.append(action_bucket_index)
             self.board_list.append(self.prev_board)
-            # Record the successful move internally for n_steps of memory
-            # self.last_moves.pop(0)
-            # self.last_moves.append(action)
-            # self.last_boards.pop(0)
-            # self.last_boards.append(self.prev_board)
-            # self.last_attributes.pop(0)
-            # self.last_attributes.append(self.prev_attributes)
         else:
             # if self.learner!="REINFORCE":
             #     self.move_list.append(action)

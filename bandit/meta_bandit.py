@@ -40,7 +40,7 @@ class meta_bandit():
         # Set up dataframe for recording the results
         # Switch commented lines as part of removing move-by-move results
         if self.record_moves:
-            self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action', 'reward', 'done', 'board'])
+            self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action','move_row','move_col', 'acting_cred','reward', 'done', 'board','cred'])
             self.all_data_df.to_csv(self.move_path,mode='a',index=False)
         
         # Always record episodes
@@ -55,19 +55,13 @@ class meta_bandit():
             
             done = 0
             episode_reward = 0
-            state_dict = self.env.reset()
-            move_row = state_dict['move_row']
-            move_col = state_dict['move_col']
+            state_dict_list = self.env.reset()
 
             # Loop over the per-episode training horizon
             for t in range(self.train_horizon):
                 # Step the environment forward with an action
-                action,control = self.select_action(state_dict)
-                next_state_dict, reward, done, move_result = self.env.step(int(action),move_row,move_col,4)
-                #next_state = next_state_dict['features']
-                #print(next_state_dict)
-                next_move_row = next_state_dict['move_row']
-                next_move_col = next_state_dict['move_col']
+                (bucket,move_row,move_col,piece_index),control = self.select_action(state_dict_list)
+                next_state_dict_list, reward, done, move_result = self.env.step(bucket,move_row,move_col,4)
                 
                 # Add step reward to episode reward
                 episode_reward+=move_result 
@@ -75,17 +69,19 @@ class meta_bandit():
                 # Write current step's data to a dataframe and concat with the main dataframe
                 log_action = self.feature_combinations[control]
                 if self.record_moves:
-                    current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':str(log_action), 'action':int(action), 'reward':int(move_result), 'done':done,'board':[self.env.board]},index=[0])
+                    cred = self.get_credibilities()
+                    acting_q = self.models[control].return_qvals()
+                    #print(acting_q)
+                    #breakpoint()
+                    current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':str(log_action), 'action':int(bucket),'move_row':move_row,'move_col':move_col,'acting_cred':[acting_q], 'reward':int(move_result), 'done':done,'board':[self.env.board],'cred':[cred]},index=[0])
                     all_data_df_list.append(current_df)
 
                 # Learn from feedback
                 for model in self.models:
-                    model.learn(action,reward)
+                    model.learn(bucket,piece_index,reward)
 
                 # Set up next iteration
-                state_dict = next_state_dict
-                move_row = next_move_row
-                move_col = next_move_col
+                state_dict_list = next_state_dict_list
                 
                 self.steps+=1
 
@@ -100,68 +96,62 @@ class meta_bandit():
                 all_data_df=pd.concat(all_data_df_list,ignore_index=True)
                 all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
             episode_reward=0
-        # for model in self.models:
-        #     print(model.feats)
-        #     print(model.return_credibility())
-        #     #print(model.q_values)
 
 
     def select_action(self,states):
+        # returns a list of tuples (bucket,move_row,move_col) from each model
         candidate_actions = [model.propose_action(states) for model in self.models]
+        # list of credibility scores from each model
         candidate_credibilities = [model.return_credibility() for model in self.models]
-        #print(candidate_actions)
-        #print(candidate_credibilities)
-        if all(cred == -1 for cred in candidate_credibilities):
-            print("all models lost credibility")
-            breakpoint()
+        # Index of the model with the best credibility
         best_candidate = np.argmax(candidate_credibilities)
-        #print(best_candidate)
         return candidate_actions[best_candidate],best_candidate
     
-    def learn(self,state,action,reward):
+    def get_credibilities(self):
+        credibilities = [(model.feats,model.return_credibility()) for model in self.models]
         #breakpoint()
-        old_val = self.q_values[state,action]
-        self.q_values[state,action]=reward
-        if self.credibility!=-1 and old_val!=self.init_q_value:
-            if old_val==reward:
-                self.credibility+=1
-            else:
-                self.credibility=-1
-        #breakpoint()
-        
+        return credibilities
 
 class bandit():
     def __init__(self,feats,dims):
-        # Initialze bandit q-table and credibility
+        # Initialize bandit q-table and credibility
         self.init_q_value = 0
         self.feats = feats
         self.feat_dims = dims
         self.in_dim, self.out_dim = np.prod(self.feat_dims), 4
         self.q_values = np.full((self.in_dim,self.out_dim),self.init_q_value,dtype=np.int8)
-        self.credibility=1
+        self.credibility=-1*len(self.feats)
 
-    def propose_action(self,state_dict):
-        #print(self.feats)
-        self.state=None
-        states = tuple(state_dict[feat] for feat in self.feats)
-        self.state = np.ravel_multi_index(states,self.feat_dims)
-        q_vals = self.q_values[self.state,:]
-        #print(self.state)
-        #print(q_vals)
-        return np.argmax(q_vals)
+    def propose_action(self,state_dict_list):
+        piece_count = len(state_dict_list)
+        self.state_list = []
+        for i,piece in enumerate(state_dict_list):
+            states = tuple(state_dict_list[i][feat] for feat in self.feats)
+            state = np.ravel_multi_index(states,self.feat_dims)
+            self.state_list.append(state)
+        q_vals = self.q_values[self.state_list,:]
+        selection = np.random.choice(np.flatnonzero(q_vals==q_vals.max()))
+        bucket = selection % 4
+        piece_index = selection // 4
+        selected_piece = state_dict_list[piece_index]
+        return (bucket,selected_piece['move_row'],selected_piece['move_col'],piece_index)
     
     def return_credibility(self):
         return self.credibility
         
-    def learn(self,action,reward):
-        if self.state == None:
+    def learn(self,action,piece_index,reward):
+        if len(self.state_list)==0:
             print("error!")
             breakpoint()
-        old_val = self.q_values[self.state,action]
-        self.q_values[self.state,action]=int(reward)
-        if self.credibility!=-1 and old_val!=self.init_q_value:
-            if old_val==reward:
+        #breakpoint()
+        state = self.state_list[piece_index]
+        old_val = self.q_values[state,action]
+        self.q_values[state,action]=int(reward)
+        if old_val!=self.init_q_value:
+            if old_val==int(reward):
                 self.credibility+=1
             else:
-                self.credibility-=3
-                # Suspect there is a bug in this causing some runs to be massive failures (when an algorithm is instantly discredited)
+                self.credibility-=20
+
+    def return_qvals(self):
+        return np.copy(self.q_values)

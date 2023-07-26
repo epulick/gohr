@@ -59,8 +59,15 @@ def single_execution(args):
 
     # Create the output directory for generated files
     run_dir = os.path.join(exp_dir, str(run_id))
-    if (not os.path.exists(run_dir)):
+    if os.path.exists(run_dir):
+        if args["OVERWRITE"]:
+            shutil.rmtree(run_dir)
+            os.makedirs(run_dir)
+    else:
         os.makedirs(run_dir)
+
+    # if (not os.path.exists(run_dir)):
+    #     os.makedirs(run_dir)
 
     move_path = os.path.join(run_dir, 'move_data.csv')
     ep_path = os.path.join(run_dir, 'episode_data.csv')
@@ -78,7 +85,8 @@ def single_execution(args):
 
     agent.train()
     error_count = agent.env.error_count
-    env.close_channel()
+    agent.env.close_channel()
+    #env.close_channel()
 
     # Write data out
     if args["RUN_TYPE"]=='cluster':
@@ -94,17 +102,6 @@ def single_execution(args):
     #         shutil.copyfileobj(f_in,f_out)
     # os.remove(move_path)
     return agent.env.error_count
-
-def debug_execution(args):
-    exp_id =  'debug'
-    run_id = 10000
-    # Create directory for export, update the args, make the folder if needed
-    exp_dir =  os.path.join(args['OUTPUT_DIR'], exp_id +"_"+ args['RULE_NAME'].split('/')[-1].split('.')[0])
-    args.update({'EXP_DIR' : exp_dir, 'EXP_ID' : exp_id,'SEED':-2,'RUN_ID':run_id})
-    if(not os.path.exists(exp_dir)):
-        os.makedirs(exp_dir)
-    single_execution(args)
-    return
 
 # Run a set of training trajectories for the learner (with the same parameters)
 def run_experiment(args):

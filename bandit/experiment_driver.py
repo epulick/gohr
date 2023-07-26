@@ -39,19 +39,22 @@ from driver import *
     
 def rule_run(args, rule_dir_path):
     # Add to rules list as desired
-    rules_list = ["1_1_color_4m.txt","1_1_color_3m_cua.txt","1_2_color_4m.txt",
-                  "1_1_shape_4m.txt","1_1_shape_3m_cua.txt","1_2_shape_4m.txt",
-                  "quadrantNearby.txt","quadrantNearbyTwoFree.txt",
-                  "clockwiseZeroStart.txt", "clockwiseTwoFreeAlt.txt","clockwiseTwoFree.txt",
-                  "bottomLeft_then_topRight.txt","bottom_then_top.txt"]
-    computation_batch = 1
-    repeats = 48
+    rules_list = [#"1_1_color_4m.txt","1_1_color_3m_cua.txt","1_2_color_4m.txt",
+                 "1_1_shape_4m.txt","1_1_shape_3m_cua.txt","1_2_shape_4m.txt"]
+                #   "quadrantNearby.txt","quadrantNearbyTwoFree.txt",
+                #   "clockwiseZeroStart.txt", "clockwiseTwoFreeAlt.txt","clockwiseTwoFree.txt",
+                #   "bottomLeft_then_topRight.txt","bottom_then_top.txt"]
+    computation_batch = 8
+    repeats = 500
     for rule in rules_list:
         args.update({"RULE_NAME":rule})
+        args.update({"PARALLEL":True})
         args.update({"BATCH_SIZE":computation_batch})
         args.update({"REPEAT":repeats})
         rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
         args.update({'RULE_FILE_PATH' : rule_file_path})
+        args.update({'OUTPUT_DIR':'outputs/meta_bandit2'})
+        args.update({'OVERWRITE':True})
         run_experiment(args)
 
 if __name__ == "__main__":

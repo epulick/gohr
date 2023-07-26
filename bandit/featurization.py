@@ -75,19 +75,12 @@ class ProcessedEnv(RuleGameEnv):
     def __init__(self,args):
         super(ProcessedEnv,self).__init__(args)
         self.model_features = args['MODEL_FEATURES']
+        # Sanity check on feature count input
         if len(self.model_features)<1:
             print("Did you forget to add model features?")
             breakpoint()
-        
-        #self.feature_sets = []
-        #self.feature_arrangements = args['FEATURE_ARRANGEMENTS']
-        #for r in self.feature_arrangements:
-        #    arr = list(combinations(self.model_features,r))
-        #    self.feature_sets.append(arr)
-        #self.feature_dims = {}
-        #self.functions = {}
-        #self.references = {}
 
+        # Store all information about how to process each feature in following dictionary
         self.feature_info = {'shape':{'input_space':self.shape_space,'func':get_shape,'reference':self.shape_id},
                        'color':{'input_space':self.color_space, 'func':get_color,'reference':self.color_id},
                        'move_row':{'input_space':self.board_size, 'func':get_row,'reference':1},
@@ -100,34 +93,30 @@ class ProcessedEnv(RuleGameEnv):
                        'bucket2':{'input_space':(self.bucket_space+1)**2,'func':get_bucket,'reference':2},
                        'bucket3':{'input_space':(self.bucket_space+1)**3,'func':get_bucket,'reference':3},
                        'bucket4':{'input_space':(self.bucket_space+1)**4,'func':get_bucket,'reference':4}}
-        
-
-        # for feat in self.model_features:
-        #     self.feature_vals[feat]=None
-        #     dims = 1
-        #     for ind in feat:
-        #         dims*=self.feature_info[ind]['input_space']
-        #     self.feature_dims[feat]=dims
-        
-        #self.out_dim = self.bucket_space
 
     def process_features(self):
-        self.feature_vals = dict.fromkeys(self.model_features)
-        self.feature_vals['move_row']=None
-        self.feature_vals['move_col']=None
+        # List of features, each entry is a dict describing the piece attributes
+        self.feature_list = []
         if len(self.board)>0:
-            piece = random.choice(self.board)
-            processing_dict = {'piece':piece,'full_move_list':self.full_move_list,'reduced_move_list':self.reduced_move_list,'board_list':self.board_list}
-            self.feature_vals['move_row'] = get_row(processing_dict,1)
-            self.feature_vals['move_col'] = get_col(processing_dict,1)
-            for feat in self.model_features:
-                func = self.feature_info[feat]['func']
-                ref = self.feature_info[feat]['reference']
-                self.feature_vals[feat]=func(processing_dict,ref)
+            for piece in self.board:
+                # Initialize
+                feature_vals = dict.fromkeys(self.model_features)
+                feature_vals['move_row']=None
+                feature_vals['move_col']=None
+                
+                # Inherits the move lists from RuleGameEnv (stores each past move/board)
+                processing_dict = {'piece':piece,'full_move_list':self.full_move_list,'reduced_move_list':self.reduced_move_list,'board_list':self.board_list}
+                feature_vals['move_row'] = get_row(processing_dict,1)
+                feature_vals['move_col'] = get_col(processing_dict,1)
+                for feat in self.model_features:
+                    func = self.feature_info[feat]['func']
+                    ref = self.feature_info[feat]['reference']
+                    feature_vals[feat]=func(processing_dict,ref)
+                self.feature_list.append(feature_vals)
     
     def get_feature(self):
         self.process_features()
-        return self.feature_vals
+        return self.feature_list
     
     def return_feature(self,feat):
         return {'move_row':self.feature_vals['move_row'],'move_col':self.feature_vals['move_col'],'features':self.feature_vals[feat]}
