@@ -51,7 +51,7 @@ def get_attributes(board, y, x):
     # Zero indexing
     shapes = {'TRIANGLE':0,'CIRCLE':1,'SQUARE':2,'STAR':3}
     colors = {'RED':0,'BLUE':1,'YELLOW':2,'GREEN':3}
-    return shape,color,shapes[shape], colors[color],id,cell
+    return shape,color,shapes[shape], colors[color],id,cell,cell-1
 
 def calc_availability(board,shape_order,color_order):
     shape_avail = np.full(4,np.nan)
