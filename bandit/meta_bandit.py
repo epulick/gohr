@@ -147,11 +147,11 @@ class bandit():
         state = self.state_list[piece_index]
         old_val = self.q_values[state,action]
         self.q_values[state,action]=int(reward)
-        if old_val!=self.init_q_value:
+        if old_val!=self.init_q_value and self.credibility!=-1:
             if old_val==int(reward):
                 self.credibility+=1
             else:
-                self.credibility-=20
+                self.credibility=-1
 
     def return_qvals(self):
         return np.copy(self.q_values)
