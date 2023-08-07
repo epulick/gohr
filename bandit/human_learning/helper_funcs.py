@@ -1,4 +1,6 @@
 import numpy as np
+import seaborn as sns
+from matplotlib.ticker import MaxNLocator
 from ast import literal_eval
 
 def bucket_remap(by,bx):
@@ -68,3 +70,27 @@ def calc_availability(board,shape_order,color_order):
         color_avail[color_order.index(color)]=color_order.index(color)
         cell_avail[cell-1]=cell
     return np.concatenate((shape_avail,color_avail,cell_avail))
+
+def ax_err_plots_player(ax,df):
+
+    # Need to add a (0,0) entry to the data since it arrives beginning with the first move
+    # Convert dataframe contents to numpy and prepend (0,0)
+    x_vals = df.move.to_numpy()
+    y_vals = df.cumulative_err.to_numpy()
+    x_vals = np.insert(x_vals,0,0)
+    y_vals = np.insert(y_vals,0,0)
+    
+    # Plot the data
+    sns.lineplot(ax=ax, x=x_vals,y=y_vals,drawstyle='steps-post')
+    
+    # Plot lines for the 0,0 axis lines
+    ax.axhline(0, color='gray',linewidth=0.25)
+    ax.axvline(0, color='gray', linewidth=0.25)
+
+    # Enforce that labels must be integers on the y-axis
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    
+    # Axis/title formatting
+    ax.set_xlabel('')
+    ax.set_ylabel("Cumulative Error")
+    return
