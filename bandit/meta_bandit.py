@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import copy
 import random, math
+from collections import deque
 from itertools import combinations
 from tqdm import tqdm
 
@@ -11,10 +12,13 @@ np.set_printoptions(precision=2)
 
 class meta_bandit():
    
-    def __init__(self,env,args,log_paths):
+    def __init__(self,env,args,log_paths,data_generator=False):
         # Pull in the game environment
         self.env = env
-        
+
+        # Bandit type choice
+        self.bandit_choice = memorization_bandit
+
         # Misc. parameter import
         self.train_horizon = args['TRAIN_HORIZON']
         self.n_episodes = args['TRAIN_EPISODES']
@@ -28,25 +32,46 @@ class meta_bandit():
         else:
             self.tqdm=True
         
-        # Set up bandits
+        # Pull in information about bandits
         self.model_features = args['MODEL_FEATURES']
         self.combination_types = args['FEATURE_ARRANGEMENTS']
+        # Set up feature combinations        
         self.feature_combinations = []
         for r in self.combination_types:
             self.feature_combinations.extend(combinations(self.model_features,r))
-        #breakpoint()
-        self.models=[bandit(feat_arr,env.calc_dim(feat_arr)) for feat_arr in self.feature_combinations]
+        
+        # Set internal variable denoting whether this run is for generating dummy data
+        # i.e., for when we want to simulate human play under a given model construction
+        self.data_generator = data_generator
+        if self.data_generator:
+            self.model_memory = 10
+            # Miscellaneous arguments relevant for data generator runs
+            self.rule = args['RULE_NAME'].split('.')[0]
+            if len(self.feature_combinations)>1:
+                print("ERROR - TOO MANY FEATURE COMBINATIONS FOR DATA GENERATOR RUN")
+                exit
+            else:
+                self.player_name = 'ML_'+str(self.feature_combinations[0])
+        else:
+            self.model_memory = np.nan
+        # Set up bandits
+        self.models=[self.bandit_choice(feat_arr,env.calc_dim(feat_arr),self.model_memory) for feat_arr in self.feature_combinations]
 
         # Set up dataframe for recording the results
         # Switch commented lines as part of removing move-by-move results
         if self.record_moves:
-            self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action','move_row','move_col', 'acting_cred','reward', 'done', 'board','cred'])
-            self.all_data_df.to_csv(self.move_path,mode='a',index=False)
+            if self.data_generator:
+                self.all_data_df = pd.DataFrame(columns=['#ruleSetName', 'playerId', 'orderInSeries', 'code','bx','by', 'board'])
+                self.all_data_df.to_csv(self.move_path,mode='a',index=False)
+            else:
+                self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action','move_row','move_col', 'acting_cred','reward', 'done', 'board','cred'])
+                self.all_data_df.to_csv(self.move_path,mode='a',index=False)
         
         # Always record episodes
         self.episode_df = pd.DataFrame(columns=['episode','reward'])
         self.episode_df.to_csv(self.ep_path,mode='a',index=False)
         #breakpoint()
+
     def train(self):
         for episode in tqdm(range(self.n_episodes)) if self.tqdm else range(self.n_episodes):
             # Set initial variables for looping
@@ -73,7 +98,15 @@ class meta_bandit():
                     acting_q = self.models[control].return_qvals()
                     #print(acting_q)
                     #breakpoint()
-                    current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':str(log_action), 'action':int(bucket),'move_row':move_row,'move_col':move_col,'acting_cred':[acting_q], 'reward':int(move_result), 'done':done,'board':[self.env.board],'cred':[cred]},index=[0])
+                    if self.data_generator:
+                        bx,by = self.get_bucket_x_y(bucket)
+                        current_df = pd.DataFrame({'#ruleSetName':self.rule, 'playerId':self.player_name, 'orderInSeries':episode, 
+                                                   'code':move_result,'bx':bx,'by':by, 'board':{"id":0,"value":[self.env.board]}})
+                    else:
+                        current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':str(log_action),
+                                                    'action':int(bucket),'move_row':move_row,'move_col':move_col,
+                                                    'acting_cred':[acting_q], 'reward':int(move_result), 'done':done,'board':[self.env.board],
+                                                    'cred':[cred]},index=[0])
                     all_data_df_list.append(current_df)
 
                 # Learn from feedback
@@ -82,7 +115,6 @@ class meta_bandit():
 
                 # Set up next iteration
                 state_dict_list = next_state_dict_list
-                
                 self.steps+=1
 
                 # Truncate episode early if the board is clear
@@ -111,27 +143,55 @@ class meta_bandit():
         credibilities = [(model.feats,model.return_credibility()) for model in self.models]
         #breakpoint()
         return credibilities
+    
+    def get_bucket_x_y(self,bucket):
+        if bucket==0:
+            x,y=0,7
+        elif bucket==1:
+            x,y=7,7
+        elif bucket==2:
+            x,y=7,0
+        elif bucket==3:
+            x,y==0,0
+        else:
+            print("ERROR - BUCKET NOT IN 0-3")
+            exit
+        return x,y
 
-class bandit():
-    def __init__(self,feats,dims):
+class memorization_bandit():
+    def __init__(self,feats,dims,memory):
         # Initialize bandit q-table and credibility
         self.init_q_value = 0
         self.feats = feats
         self.feat_dims = dims
         self.in_dim, self.out_dim = np.prod(self.feat_dims), 4
+        if not(np.isnan(memory)):
+            self.memory=deque([],maxlen=self.memory)
+            self.infinite_memory = False
+        else:
+            self.infinite_memory = True
+
         self.q_values = np.full((self.in_dim,self.out_dim),self.init_q_value,dtype=np.int8)
         self.credibility=-1*len(self.feats)
 
     def propose_action(self,state_dict_list):
-        piece_count = len(state_dict_list)
+        # Generate list of states (each row is the state of a piece on the board)
         self.state_list = []
+        # Step through entire list of pieces on the board
         for i,piece in enumerate(state_dict_list):
+            # For a given piece, extract all state values for each feature used in this model
             states = tuple(state_dict_list[i][feat] for feat in self.feats)
+            # Ravel the states into the representation of state used by the model
             state = np.ravel_multi_index(states,self.feat_dims)
+            # Add this state to the list
             self.state_list.append(state)
+        # Get q values associated with every object on the board (one row of the q-table per object)
         q_vals = self.q_values[self.state_list,:]
+        # Get the index of the q-table array
         selection = np.random.choice(np.flatnonzero(q_vals==q_vals.max()))
+        # Bucket is obtained via modulo (each q-table row has 4 values)
         bucket = selection % 4
+        # Corresponding piece index is obtained by floor division
         piece_index = selection // 4
         selected_piece = state_dict_list[piece_index]
         return (bucket,selected_piece['move_row'],selected_piece['move_col'],piece_index)
