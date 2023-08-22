@@ -12,7 +12,7 @@ np.set_printoptions(precision=2)
 
 class meta_bandit():
    
-    def __init__(self,env,args,log_paths,data_generator=False):
+    def __init__(self,env,args,log_paths):
         # Pull in the game environment
         self.env = env
 
@@ -23,7 +23,7 @@ class meta_bandit():
         self.train_horizon = args['TRAIN_HORIZON']
         self.n_episodes = args['TRAIN_EPISODES']
         self.steps = 0
-        self.init_q_value = -.5
+        self.invalid_model = -10
         
         self.record_moves = args['RECORD_MOVES']
         self.move_path,self.ep_path = log_paths[0],log_paths[1]
@@ -42,34 +42,35 @@ class meta_bandit():
         
         # Set internal variable denoting whether this run is for generating dummy data
         # i.e., for when we want to simulate human play under a given model construction
-        self.data_generator = data_generator
+        self.data_generator = args['RUN_TYPE']=='data_generator'
         if self.data_generator:
-            self.model_memory = 10
+            self.model_memory = args["MEMORY_LENGTH"]
             # Miscellaneous arguments relevant for data generator runs
             self.rule = args['RULE_NAME'].split('.')[0]
             if len(self.feature_combinations)>1:
                 print("ERROR - TOO MANY FEATURE COMBINATIONS FOR DATA GENERATOR RUN")
                 exit
             else:
-                self.player_name = 'ML_'+str(self.feature_combinations[0])
+                self.player_name = 'ML_'+str(self.feature_combinations[0][0])
         else:
             self.model_memory = np.nan
         # Set up bandits
-        self.models=[self.bandit_choice(feat_arr,env.calc_dim(feat_arr),self.model_memory) for feat_arr in self.feature_combinations]
+        self.models=[self.bandit_choice(feat_arr,env.calc_dim(feat_arr),self.model_memory,self.invalid_model) for feat_arr in self.feature_combinations]
 
         # Set up dataframe for recording the results
         # Switch commented lines as part of removing move-by-move results
         if self.record_moves:
             if self.data_generator:
-                self.all_data_df = pd.DataFrame(columns=['#ruleSetName', 'playerId', 'orderInSeries', 'code','bx','by', 'board'])
+                self.all_data_df = pd.DataFrame(columns=['#ruleSetName', 'playerId', 'orderInSeries','seriesNo', 'code','x','y','bx','by', 'board'])
                 self.all_data_df.to_csv(self.move_path,mode='a',index=False)
             else:
-                self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action','move_row','move_col', 'acting_cred','reward', 'done', 'board','cred'])
+                self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action','move_row','move_col','acting_state','acting_cred','reward', 'done', 'board','cred'])
                 self.all_data_df.to_csv(self.move_path,mode='a',index=False)
         
-        # Always record episodes
-        self.episode_df = pd.DataFrame(columns=['episode','reward'])
-        self.episode_df.to_csv(self.ep_path,mode='a',index=False)
+        # Record episodes
+        if not(self.data_generator):
+            self.episode_df = pd.DataFrame(columns=['episode','reward'])
+            self.episode_df.to_csv(self.ep_path,mode='a',index=False)
         #breakpoint()
 
     def train(self):
@@ -87,7 +88,7 @@ class meta_bandit():
                 # Step the environment forward with an action
                 (bucket,move_row,move_col,piece_index),control = self.select_action(state_dict_list)
                 next_state_dict_list, reward, done, move_result = self.env.step(bucket,move_row,move_col,4)
-                
+                #breakpoint()
                 # Add step reward to episode reward
                 episode_reward+=move_result 
 
@@ -96,15 +97,16 @@ class meta_bandit():
                 if self.record_moves:
                     cred = self.get_credibilities()
                     acting_q = self.models[control].return_qvals()
+                    acting_state = self.models[control].state_list[piece_index]
                     #print(acting_q)
                     #breakpoint()
                     if self.data_generator:
                         bx,by = self.get_bucket_x_y(bucket)
-                        current_df = pd.DataFrame({'#ruleSetName':self.rule, 'playerId':self.player_name, 'orderInSeries':episode, 
-                                                   'code':move_result,'bx':bx,'by':by, 'board':{"id":0,"value":[self.env.board]}})
+                        current_df = pd.DataFrame({'#ruleSetName':self.rule, 'playerId':self.player_name, 'orderInSeries':episode, 'seriesNo':0,
+                                                   'code':move_result,'x':move_col,'y':move_row,'bx':bx,'by':by, 'board':str({"id":0,"value":self.env.board})},index=[0])
                     else:
                         current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':str(log_action),
-                                                    'action':int(bucket),'move_row':move_row,'move_col':move_col,
+                                                    'action':int(bucket),'move_row':move_row,'move_col':move_col, 'acting_state':acting_state,
                                                     'acting_cred':[acting_q], 'reward':int(move_result), 'done':done,'board':[self.env.board],
                                                     'cred':[cred]},index=[0])
                     all_data_df_list.append(current_df)
@@ -122,8 +124,9 @@ class meta_bandit():
                     break
 
             # Reset the episode reward before the next iteration
-            episode_df = pd.DataFrame({'episode':episode, 'reward':episode_reward},index=[0])
-            episode_df.to_csv(self.ep_path,header=False,mode='a',index=False)
+            if not(self.data_generator):
+                episode_df = pd.DataFrame({'episode':episode, 'reward':episode_reward},index=[0])
+                episode_df.to_csv(self.ep_path,header=False,mode='a',index=False)
             if self.record_moves:
                 all_data_df=pd.concat(all_data_df_list,ignore_index=True)
                 all_data_df.to_csv(self.move_path,header=False,mode='a',index=False)
@@ -131,10 +134,15 @@ class meta_bandit():
 
 
     def select_action(self,states):
-        # returns a list of tuples (bucket,move_row,move_col) from each model
+        # returns a list of tuples (bucket,move_row,move_col,piece_index) from each model
         candidate_actions = [model.propose_action(states) for model in self.models]
         # list of credibility scores from each model
         candidate_credibilities = [model.return_credibility() for model in self.models]
+        #breakpoint()
+        if np.max(candidate_credibilities)==self.invalid_model and not(self.data_generator):
+            print("Error - all models have lost credibility")
+            breakpoint()
+            #exit
         # Index of the model with the best credibility
         best_candidate = np.argmax(candidate_credibilities)
         return candidate_actions[best_candidate],best_candidate
@@ -146,27 +154,32 @@ class meta_bandit():
     
     def get_bucket_x_y(self,bucket):
         if bucket==0:
-            x,y=0,7
+            x=0
+            y=7
         elif bucket==1:
-            x,y=7,7
+            x=7
+            y=7
         elif bucket==2:
-            x,y=7,0
+            x=7
+            y=0
         elif bucket==3:
-            x,y==0,0
+            x=0
+            y=0
         else:
             print("ERROR - BUCKET NOT IN 0-3")
             exit
         return x,y
 
 class memorization_bandit():
-    def __init__(self,feats,dims,memory):
+    def __init__(self,feats,dims,memory,invalid):
         # Initialize bandit q-table and credibility
         self.init_q_value = 0
         self.feats = feats
         self.feat_dims = dims
         self.in_dim, self.out_dim = np.prod(self.feat_dims), 4
+        self.invalid_model = invalid
         if not(np.isnan(memory)):
-            self.memory=deque([],maxlen=self.memory)
+            self.memory=deque([],maxlen=memory)
             self.infinite_memory = False
         else:
             self.infinite_memory = True
@@ -195,23 +208,45 @@ class memorization_bandit():
         piece_index = selection // 4
         selected_piece = state_dict_list[piece_index]
         return (bucket,selected_piece['move_row'],selected_piece['move_col'],piece_index)
-    
-    def return_credibility(self):
-        return self.credibility
-        
+
+    # Learn from feedback and update model credibility    
     def learn(self,action,piece_index,reward):
+        
+        # Sanity check for a cleared board (shouldn't have made it to the prerequisite action proposal stage if board is clear)
         if len(self.state_list)==0:
             print("error!")
             breakpoint()
-        #breakpoint()
+        
+        # Common calculations
         state = self.state_list[piece_index]
         old_val = self.q_values[state,action]
-        self.q_values[state,action]=int(reward)
-        if old_val!=self.init_q_value and self.credibility!=-1:
+
+        # Common credibility update mechanism
+        # Credibility update is "harsh" (complete loss of credibility for inconsistent information)
+        if old_val!=self.init_q_value and self.credibility!=self.invalid_model:
+            # Increment credibility for q-value consistency
             if old_val==int(reward):
                 self.credibility+=1
+            # Entirely discredit model for inconsistent q-values
             else:
-                self.credibility=-1
+                #breakpoint()
+                self.credibility=self.invalid_model
+
+        # Subdivide q-value updates into infinite and finite memory cases
+        # Infinite memory update (q-table is updated continuously)
+        if self.infinite_memory:
+            self.q_values[state,action]=int(reward)
+        # Finite memory case (q-table rebuilt from rolling memory)
+        else:
+            # Add experience to memory
+            self.memory.append((state,action,int(reward)))
+            # Create new q-table from scratch
+            self.q_values = np.full((self.in_dim,self.out_dim),self.init_q_value,dtype=np.int8)
+            for (s,a,r) in self.memory:
+                self.q_values[s,a]=r
 
     def return_qvals(self):
         return np.copy(self.q_values)
+    
+    def return_credibility(self):
+        return self.credibility

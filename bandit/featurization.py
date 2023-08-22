@@ -28,7 +28,7 @@ def get_cell(pd,reference):
     piece = pd['piece']
     return (piece['y']-1)*6+piece['x']-1
 
-# zero-indexed (buckets always are)
+# zero-indexed
 def get_bucket(pd,reference):
     buckets = list(pd['reduced_move_list'])[-reference:]
     bucket_id = {0:0,1:1,2:2,3:3,None:4}

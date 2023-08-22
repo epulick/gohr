@@ -25,11 +25,12 @@ def bucket_remap(by,bx):
 
 def process_board(board_str):
     board = literal_eval(board_str)['value']
-    smallest_id = board[0]['id']
-    for piece in board:
-        id = piece['id']
-        if id<smallest_id:
-            smallest_id=id
+    # print(board)
+    # smallest_id = board[0]['id']
+    # for piece in board:
+    #     id = piece['id']
+    #     if id<smallest_id:
+    #         smallest_id=id
     board_copy=board
     return board_copy
 

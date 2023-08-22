@@ -5,45 +5,15 @@ from rule_game_env import *
 #from rule_sets import *
 from featurization import *
 from driver import *
-
-# def objective(trial, args):
-#     n_layers = trial.suggest_int('n_layers', 1,4)
-#     LR = trial.suggest_float('LR',0.0001,0.01)
-#     hidden_sizes = []
-#     size = trial.suggest_int('size',50,1000)
-#     for i in range(n_layers):
-#         hidden_sizes.append(size)
-#     args.update({'HIDDEN_SIZES':hidden_sizes})
-#     args.update({'LR':LR})
-#     results = run_experiment(args)
-#     return np.median(results)
-
-# def hyperparameter_tuning(args):
-#     import optuna
-#     study_name = args["YAML_NAME"]
-#     storage_name = "sqlite:///{}{}.db".format(args["OUTPUT_DIR"]+"/",study_name)
-#     study = optuna.create_study(study_name=study_name,storage=storage_name,direction = "minimize",load_if_exists=True)
-#     study.optimize(lambda trial: objective(trial,args),n_trials=40)
-
-#     print("Study statistics: ")
-#     print("  Number of finished trials: ", len(study.trials))
-
-#     print("Best trial:")
-#     trial = study.best_trial
-
-#     print("  Value: ", trial.value)
-
-#     print("  Params: ")
-#     for key, value in trial.params.items():
-#         print("    {}: {}".format(key, value))
     
 def rule_run(args, rule_dir_path):
     # Add to rules list as desired
-    rules_list = [#"1_1_color_4m.txt","1_1_color_3m_cua.txt","1_2_color_4m.txt",
-                 "1_1_shape_4m.txt","1_1_shape_3m_cua.txt","1_2_shape_4m.txt"]
-                #   "quadrantNearby.txt","quadrantNearbyTwoFree.txt",
-                #   "clockwiseZeroStart.txt", "clockwiseTwoFreeAlt.txt","clockwiseTwoFree.txt",
-                #   "bottomLeft_then_topRight.txt","bottom_then_top.txt"]
+    rules_list = [  "1_1_color_4m.txt","1_1_color_3m_cua.txt","1_2_color_4m.txt",
+                    "1_1_shape_4m.txt","1_1_shape_3m_cua.txt","1_2_shape_4m.txt",
+                    "quadrantNearby.txt","quadrantNearbyTwoFree.txt",
+                    "clockwiseZeroStart.txt", "clockwiseTwoFreeAlt.txt","clockwiseTwoFree.txt",
+                    "bottomLeft_then_topRight.txt","bottom_then_top.txt"
+                    ]
     computation_batch = 8
     repeats = 500
     for rule in rules_list:
@@ -53,9 +23,28 @@ def rule_run(args, rule_dir_path):
         args.update({"REPEAT":repeats})
         rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
         args.update({'RULE_FILE_PATH' : rule_file_path})
-        args.update({'OUTPUT_DIR':'outputs/meta_bandit2'})
+        args.update({'OUTPUT_DIR':'outputs/meta_bandit3'})
         args.update({'OVERWRITE':True})
         run_experiment(args)
+
+def data_generator(args, rule_dir_path):
+    rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
+    args.update({'RULE_FILE_PATH' : rule_file_path})
+    feats = ['shape','color','row','col','quadrant','cell','bucket1','bucket2','bucket3','bucket4']
+    rules_list = [  "1_1_color_4m.txt","1_1_color_3m_cua.txt","1_2_color_4m.txt",
+                "1_1_shape_4m.txt","1_1_shape_3m_cua.txt","1_2_shape_4m.txt",
+                "quadrantNearby.txt","quadrantNearbyTwoFree.txt",
+                "clockwiseZeroStart.txt", "clockwiseTwoFreeAlt.txt","clockwiseTwoFree.txt",
+                "bottomLeft_then_topRight.txt","bottom_then_top.txt"
+                ]
+    for feat in ['shape']:
+        args.update({'OUTPUT_DIR':os.path.join('outputs/data_generator',feat)})
+        args.update({'MODEL_FEATURES': [feat]})
+        for rule in ['1_1_shape_4m.txt']:
+            args.update({"RULE_NAME":rule})
+            rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
+            args.update({'RULE_FILE_PATH' : rule_file_path})
+            run_experiment(args)
 
 if __name__ == "__main__":
     rule_dir_path = sys.argv[1]
@@ -100,5 +89,7 @@ if __name__ == "__main__":
         output_dir = "outputs/rule_runs/"+yaml_name
         args.update({"OUTPUT_DIR":output_dir})
         rule_run(args,rule_dir_path)
+    elif args['RUN_TYPE']=='data_generator':
+        data_generator(args,rule_dir_path)
     else:
         breakpoint()

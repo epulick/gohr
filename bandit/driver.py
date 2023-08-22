@@ -9,7 +9,7 @@ from rule_game_env import *
 #from rule_sets import *
 from featurization import *
 from tabular_bandit import tabular_bandit
-from meta_bandit import bandit,meta_bandit
+from meta_bandit import memorization_bandit,meta_bandit
 
 # Run a single training trajectory for the learner
 def single_execution(args):
