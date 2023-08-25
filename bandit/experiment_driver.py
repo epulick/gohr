@@ -29,6 +29,7 @@ def rule_run(args, rule_dir_path):
 
 def data_generator(args, rule_dir_path):
     rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
+    args.update({"REPEAT":3})
     args.update({'RULE_FILE_PATH' : rule_file_path})
     feats = ['shape','color','row','col','quadrant','cell','bucket1','bucket2','bucket3','bucket4']
     rules_list = [  "1_1_color_4m.txt","1_1_color_3m_cua.txt","1_2_color_4m.txt",
@@ -37,10 +38,10 @@ def data_generator(args, rule_dir_path):
                 "clockwiseZeroStart.txt", "clockwiseTwoFreeAlt.txt","clockwiseTwoFree.txt",
                 "bottomLeft_then_topRight.txt","bottom_then_top.txt"
                 ]
-    for feat in ['shape']:
+    for feat in feats:
         args.update({'OUTPUT_DIR':os.path.join('outputs/data_generator',feat)})
         args.update({'MODEL_FEATURES': [feat]})
-        for rule in ['1_1_shape_4m.txt']:
+        for rule in ["1_1_shape_4m.txt"]:
             args.update({"RULE_NAME":rule})
             rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
             args.update({'RULE_FILE_PATH' : rule_file_path})

@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import copy
 import random, math
+import os,binascii,secrets
 from collections import deque
 from itertools import combinations
 from tqdm import tqdm
@@ -51,7 +52,7 @@ class meta_bandit():
                 print("ERROR - TOO MANY FEATURE COMBINATIONS FOR DATA GENERATOR RUN")
                 exit
             else:
-                self.player_name = 'ML_'+str(self.feature_combinations[0][0])
+                self.player_name = 'ML_'+str(self.feature_combinations[0][0])+'_'+str(secrets.token_hex(10))
         else:
             self.model_memory = np.nan
         # Set up bandits
@@ -61,7 +62,7 @@ class meta_bandit():
         # Switch commented lines as part of removing move-by-move results
         if self.record_moves:
             if self.data_generator:
-                self.all_data_df = pd.DataFrame(columns=['#ruleSetName', 'playerId', 'orderInSeries','seriesNo', 'code','x','y','bx','by', 'board'])
+                self.all_data_df = pd.DataFrame(columns=['#ruleSetName', 'playerId', 'orderInSeries','seriesNo','acting_state','acting_q','reward', 'code','x','y','bx','by', 'board'])
                 self.all_data_df.to_csv(self.move_path,mode='a',index=False)
             else:
                 self.all_data_df = pd.DataFrame(columns=['episode', 'time', 'action_type', 'action','move_row','move_col','acting_state','acting_cred','reward', 'done', 'board','cred'])
@@ -103,7 +104,8 @@ class meta_bandit():
                     if self.data_generator:
                         bx,by = self.get_bucket_x_y(bucket)
                         current_df = pd.DataFrame({'#ruleSetName':self.rule, 'playerId':self.player_name, 'orderInSeries':episode, 'seriesNo':0,
-                                                   'code':move_result,'x':move_col,'y':move_row,'bx':bx,'by':by, 'board':str({"id":0,"value":self.env.board})},index=[0])
+                                                   'acting_state':acting_state,'acting_q':[acting_q], 'reward':int(reward),
+                                                   'code':move_result,'x':move_col,'y':move_row,'bx':bx,'by':by, 'board':str({"id":0,"value":self.env.prev_board})},index=[0])
                     else:
                         current_df = pd.DataFrame({'episode':episode, 'time':t, 'action_type':str(log_action),
                                                     'action':int(bucket),'move_row':move_row,'move_col':move_col, 'acting_state':acting_state,
@@ -145,6 +147,7 @@ class meta_bandit():
             #exit
         # Index of the model with the best credibility
         best_candidate = np.argmax(candidate_credibilities)
+        #breakpoint()
         return candidate_actions[best_candidate],best_candidate
     
     def get_credibilities(self):
@@ -225,7 +228,7 @@ class memorization_bandit():
         # Credibility update is "harsh" (complete loss of credibility for inconsistent information)
         if old_val!=self.init_q_value and self.credibility!=self.invalid_model:
             # Increment credibility for q-value consistency
-            if old_val==int(reward):
+            if int(old_val)==int(reward):
                 self.credibility+=1
             # Entirely discredit model for inconsistent q-values
             else:
