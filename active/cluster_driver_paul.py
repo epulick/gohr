@@ -46,6 +46,8 @@ if __name__ == "__main__":
     args.update({"REPEAT":repeats})
     args.update({"RECORD":0})
     args.update({"CLUSTER_ID":cluster_id})
+    args.update({"R_ACCEPT":1})
+    args.update({"R_REJECT":-1})
     rule_file_path = os.path.join(rule_dir_path, args["RULE_NAME"])
     args.update({'RULE_FILE_PATH' : rule_file_path})
     # Experiment updates
