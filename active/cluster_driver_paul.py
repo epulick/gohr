@@ -39,7 +39,8 @@ if __name__ == "__main__":
     args.update({"RUN_TYPE":"cluster"})
     args.update({"PARALLEL":False})
     args.update({"BATCH_SIZE":1})
-    args.update({"TRAIN_EPISODES":50})
+    args.update({"TRAIN_EPISODES":3000})
+    args.update({"REPLAY_BUFFER_SIZE":10000})
     yaml_name = yaml_path.split("/")[-1].split('.')[0]
     args.update({"YAML_NAME":yaml_name})
     output_dir = "outputs/"+yaml_name
