@@ -147,3 +147,6 @@ outputs/
 
 # Ignore misc mlc outputs
 misc/mlc_proc_output/
+
+# Random data files
+*misc_data
